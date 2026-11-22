@@ -1,0 +1,74 @@
+table 'mart executive_monthly'
+	lineageTag: 1240fd2b-9795-4d49-8d68-37aad3aa121f
+
+	column month_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: ee7ad773-45e3-4264-a5dc-f812eee5d57e
+		summarizeBy: none
+		sourceColumn: month_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column sales
+		dataType: double
+		lineageTag: b06fca58-2f92-44d4-845a-7b007c147571
+		summarizeBy: sum
+		sourceColumn: sales
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column profit
+		dataType: double
+		lineageTag: 0115781f-6d49-41c7-9e1a-6940b9a56ed8
+		summarizeBy: sum
+		sourceColumn: profit
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column orders
+		dataType: int64
+		formatString: 0
+		lineageTag: f646572c-a54e-4aac-96f5-aef412d2317d
+		summarizeBy: sum
+		sourceColumn: orders
+
+		annotation SummarizationSetBy = Automatic
+
+	column unprofitable_orders
+		dataType: int64
+		formatString: 0
+		lineageTag: ed119080-38a9-48cc-bbc6-6a3925b2b256
+		summarizeBy: sum
+		sourceColumn: unprofitable_orders
+
+		annotation SummarizationSetBy = Automatic
+
+	column YearMonth =
+			FORMAT(
+			    'mart executive_monthly'[month_date],
+			    "MMM yyyy",
+			    "en-US"
+			)
+		dataType: string
+		lineageTag: 9e9d4bd2-eafd-4efa-ac4d-ec5442d50399
+		summarizeBy: none
+		sortByColumn: month_date
+
+	partition 'mart executive_monthly' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5432", "sales_dwh"),
+				    mart_executive_monthly = Source{[Schema="mart",Item="executive_monthly"]}[Data]
+				in
+				    mart_executive_monthly
+
+	annotation PBI_ResultType = Table
+

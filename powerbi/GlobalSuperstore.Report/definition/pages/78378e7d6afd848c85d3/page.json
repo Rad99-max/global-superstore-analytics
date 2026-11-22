@@ -1,0 +1,51 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "78378e7d6afd848c85d3",
+  "displayName": "Sales & Profitability",
+  "displayOption": "FitToPage",
+  "height": 1080,
+  "width": 1920,
+  "pageBinding": {
+    "name": "53f1c8a966abce03990d",
+    "type": "Default",
+    "parameters": []
+  },
+  "objects": {
+    "background": [
+      {
+        "properties": {
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#F5F6F8'"
+                  }
+                }
+              }
+            }
+          },
+          "transparency": {
+            "expr": {
+              "Literal": {
+                "Value": "0D"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "visualInteractions": [
+    {
+      "source": "93036f0e756b42cb8f48",
+      "target": "258596fb8b1d49b899c3",
+      "type": "DataFilter"
+    },
+    {
+      "source": "93036f0e756b42cb8f48",
+      "target": "e035b0febf134806a3de",
+      "type": "DataFilter"
+    }
+  ]
+}

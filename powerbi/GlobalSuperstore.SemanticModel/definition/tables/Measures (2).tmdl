@@ -1,0 +1,1470 @@
+table 'Measures (2)'
+	lineageTag: 16bc0e31-ce67-46e4-92e8-d0bef6177259
+
+	measure Sales = SUM('mart executive_monthly'[sales])
+		formatString: #,0.00
+		lineageTag: 33db1a2a-3e08-49ed-b453-d6cafaa5a93b
+
+	measure Profit = SUM('mart executive_monthly'[profit])
+		formatString: #,0.00
+		lineageTag: 60625c76-3525-4819-a5dc-a5b9fb229cae
+
+	measure Orders = SUM('mart executive_monthly'[orders])
+		formatString: #,0
+		lineageTag: a6be287c-2bdf-4d94-aaf5-a654a4f90788
+
+	measure 'Unprofitable Orders' = SUM('mart executive_monthly'[unprofitable_orders])
+		formatString: #,0
+		lineageTag: 479f16b7-f285-472c-ab8f-4f1a585cd432
+
+	measure 'Profit Margin' = DIVIDE([Profit], [Sales])
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: dc4aea0c-b9f6-476e-8c86-cb0cb21dc506
+
+	measure 'Unprofitable Order Rate' = DIVIDE([Unprofitable Orders], [Orders])
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: bb1a6152-36ed-4688-9e25-b9c2912bc3e8
+
+	measure 'Sales PY' =
+			
+			IF(
+			    HASONEVALUE('dwh dim_date'[calendar_year]),
+			    CALCULATE(
+			        [Sales],
+			        SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date])
+			    ),
+			    BLANK()
+			)
+		formatString: #,0.00
+		lineageTag: 4e7b6f12-152f-44aa-b924-2f209f828ce1
+
+	measure 'Profit PY' =
+			
+			IF(
+			    HASONEVALUE('dwh dim_date'[calendar_year]),
+			    CALCULATE(
+			        [Profit],
+			        SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date])
+			    ),
+			    BLANK()
+			)
+		formatString: #,0.00
+		lineageTag: b3d26bac-1f26-4561-a0cc-87d81fbb92ca
+
+	measure 'Orders PY' =
+			
+			IF(
+			    HASONEVALUE('dwh dim_date'[calendar_year]),
+			    CALCULATE(
+			        [Orders],
+			        SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date])
+			    ),
+			    BLANK()
+			)
+		formatString: #,0
+		lineageTag: 26cc4b9b-0223-4094-a4ac-d9d504d176e6
+
+	measure 'Sales YoY %' = DIVIDE([Sales] - [Sales PY], [Sales PY])
+		formatString: #,0.00%;-#,0.00%;#,0.00%
+		lineageTag: 57be2168-47c6-4a6d-a83c-12aa227d6ab6
+
+	measure 'Profit YoY %' = IF([Profit PY] <= 0, BLANK(), DIVIDE([Profit] - [Profit PY], [Profit PY]))
+		formatString: #,0.00%;-#,0.00%;#,0.00%
+		lineageTag: a5854e9d-c845-48f0-a5d0-8b66a7768766
+
+	measure 'Orders YoY %' = DIVIDE([Orders] - [Orders PY], [Orders PY])
+		formatString: #,0.00%;-#,0.00%;#,0.00%
+		lineageTag: b37089c1-d2ec-4a3f-9052-42afff8e2226
+
+	measure 'Profit Margin PY' =
+			
+			IF(
+			    HASONEVALUE('dwh dim_date'[calendar_year]),
+			    CALCULATE(
+			        [Profit Margin],
+			        SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date])
+			    ),
+			    BLANK()
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: f73a286a-e09d-482f-bcd8-f3e8e08f2a43
+
+	measure 'Profit Margin Δ pp' =
+			
+			VAR CurrentRate = [Profit Margin]
+			VAR PreviousRate = [Profit Margin PY]
+			RETURN
+			    IF(
+			        ISBLANK(CurrentRate) || ISBLANK(PreviousRate),
+			        BLANK(),
+			        (CurrentRate - PreviousRate) * 100
+			    )
+		formatString: 0.00
+		lineageTag: 32003564-c624-438b-ad58-b6151df622f6
+
+	measure 'Unprofitable Order Rate PY' =
+			
+			IF(
+			    HASONEVALUE('dwh dim_date'[calendar_year]),
+			    CALCULATE(
+			        [Unprofitable Order Rate],
+			        SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date])
+			    ),
+			    BLANK()
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: b89da689-45b7-4a7b-b6ee-9db177ad2f1e
+
+	measure 'Unprofitable Order Rate Δ pp' =
+			
+			VAR CurrentRate = [Unprofitable Order Rate]
+			VAR PreviousRate = [Unprofitable Order Rate PY]
+			RETURN
+			    IF(
+			        ISBLANK(CurrentRate) || ISBLANK(PreviousRate),
+			        BLANK(),
+			        (CurrentRate - PreviousRate) * 100
+			    )
+		formatString: 0.00
+		lineageTag: fdccb931-a567-4d5a-9a83-fedabd3793cb
+
+	measure 'Tooltip Period' = SELECTEDVALUE('mart executive_monthly'[YearMonth])
+		lineageTag: f97a135f-e355-4d86-9a63-5e9947c5f701
+
+	measure 'Insight Growth' =
+			VAR HasCurrentData = NOT ISBLANK([Sales]) || NOT ISBLANK([Profit]) || NOT ISBLANK([Orders])
+			VAR HasComparison = NOT ISBLANK([Sales PY]) && NOT ISBLANK([Profit PY]) && NOT ISBLANK([Orders PY])
+			VAR SignedK = "+#,0.0;-#,0.0;0.0"
+			RETURN
+			    SWITCH(
+			        TRUE(),
+			        NOT HasCurrentData, "No data for the selected period.",
+			        NOT HasComparison, "Prior-year comparison is unavailable.",
+			        "Change vs PY: Sales " & FORMAT(([Sales] - [Sales PY]) / 1000, SignedK, "en-US") & "K"
+			            & " | Profit " & FORMAT(([Profit] - [Profit PY]) / 1000, SignedK, "en-US") & "K"
+			            & " | Orders " & FORMAT([Orders] - [Orders PY], "+#,0;-#,0;0", "en-US")
+			            & UNICHAR(10)
+			            & "PY: Sales " & FORMAT([Sales PY] / 1000, "#,0.0", "en-US") & "K"
+			            & " | Profit " & FORMAT([Profit PY] / 1000, "#,0.0", "en-US") & "K"
+			            & " | Orders " & FORMAT([Orders PY], "#,0", "en-US")
+			    )
+		lineageTag: eb561469-3c2c-47fb-9294-5ab20fef0206
+
+	measure 'Insight Margin' =
+			VAR PreviousMargin = [Profit Margin PY]
+			RETURN
+			    SWITCH(
+			        TRUE(),
+			        ISBLANK([Profit Margin]), "No data for the selected period.",
+			        ISBLANK(PreviousMargin), "Prior-year comparison is unavailable.",
+			        "Profit Margin PY " & FORMAT(PreviousMargin, "0.00%", "en-US")
+			    )
+		lineageTag: d607d2b5-8b1d-4fdd-a01c-179933bf5011
+
+	measure 'Insight Risk' =
+			VAR PreviousOrders = [Orders PY]
+			VAR PreviousUnprofitable =
+			    CALCULATE([Unprofitable Orders], SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date]))
+			VAR CurrentText =
+			    "Unprofitable orders: " & FORMAT([Unprofitable Orders], "#,0", "en-US")
+			        & " of " & FORMAT([Orders], "#,0", "en-US")
+			RETURN
+			    SWITCH(
+			        TRUE(),
+			        ISBLANK([Orders]), "No data for the selected period.",
+			        ISBLANK(PreviousOrders), CurrentText & UNICHAR(10) & "Prior-year comparison is unavailable.",
+			        CurrentText & UNICHAR(10)
+			            & "PY: " & FORMAT(PreviousUnprofitable, "#,0", "en-US")
+			            & " of " & FORMAT(PreviousOrders, "#,0", "en-US")
+			            & " (" & FORMAT([Unprofitable Order Rate PY], "0.00%", "en-US") & ")"
+			    )
+		lineageTag: f2aec0b7-a523-4be4-92fc-f772f5ceb96f
+
+	measure 'Reporting Period' =
+			VAR SelectedYears = VALUES('dwh dim_date'[calendar_year])
+			VAR YearCount = COUNTROWS(SelectedYears)
+			VAR MinYear = MINX(SelectedYears, 'dwh dim_date'[calendar_year])
+			VAR MaxYear = MAXX(SelectedYears, 'dwh dim_date'[calendar_year])
+			VAR SelectedQuarters = VALUES('dwh dim_date'[calendar_quarter])
+			VAR QuarterCount = COUNTROWS(SelectedQuarters)
+			VAR MinQuarter = MINX(SelectedQuarters, 'dwh dim_date'[calendar_quarter])
+			VAR MaxQuarter = MAXX(SelectedQuarters, 'dwh dim_date'[calendar_quarter])
+			VAR QuarterText =
+			    SWITCH(
+			        TRUE(),
+			        QuarterCount = 4 || QuarterCount = 0, "",
+			        QuarterCount = 1,
+			            "Q" & FORMAT(MinQuarter, "0", "en-US") & " ",
+			        MaxQuarter - MinQuarter + 1 = QuarterCount,
+			            "Q" & FORMAT(MinQuarter, "0", "en-US")
+			                & "-Q" & FORMAT(MaxQuarter, "0", "en-US") & " ",
+			        CONCATENATEX(
+			            SelectedQuarters,
+			            "Q" & FORMAT('dwh dim_date'[calendar_quarter], "0", "en-US"),
+			            ", ",
+			            'dwh dim_date'[calendar_quarter], ASC
+			        ) & " "
+			    )
+			VAR PeriodText =
+			    IF(
+			        YearCount = 1,
+			        QuarterText & FORMAT(MinYear, "0", "en-US"),
+			        FORMAT(MinYear, "0", "en-US")
+			            & "–" & FORMAT(MaxYear, "0", "en-US")
+			    )
+			RETURN
+			    IF(
+			        YearCount = 0,
+			        BLANK(),
+			        "Reporting Period: " & IF(
+			                HASONEVALUE('dwh dim_date'[YearMonthSort]),
+			                FORMAT(MIN('dwh dim_date'[calendar_date]), "MMM yyyy", "en-US"),
+			                PeriodText
+			            )
+			    )
+		lineageTag: 02dc38d4-6d8f-40f6-a8ce-bae367b79a84
+
+	measure 'Profitable Sales' =
+			CALCULATE(
+			    SUM('mart sales_profitability_monthly'[sales]),
+			    KEEPFILTERS(
+			        'mart sales_profitability_monthly'[order_profitability_status] = "PROFITABLE"
+			    )
+			)
+		formatString: #,0.00
+		lineageTag: b85cb1d2-f573-428b-b33c-a2caa2b0da12
+
+	measure 'Loss-Making Sales' =
+			CALCULATE(
+			    SUM('mart sales_profitability_monthly'[sales]),
+			    KEEPFILTERS(
+			        'mart sales_profitability_monthly'[order_profitability_status] = "LOSS_MAKING"
+			    )
+			)
+		formatString: #,0.00
+		lineageTag: 8e797411-7e17-4262-8e9e-ba326a75a723
+
+	measure 'Profitable Sales PY' =
+			IF(
+			    HASONEVALUE('dwh dim_date'[calendar_year]),
+			    CALCULATE(
+			        [Profitable Sales],
+			        SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date])
+			    ),
+			    BLANK()
+			)
+		formatString: #,0.00
+		lineageTag: ff0003a2-7c76-4277-9fe9-2fb740f6e3e6
+
+	measure 'Profitable Sales YoY %' = DIVIDE([Profitable Sales] - [Profitable Sales PY], [Profitable Sales PY])
+		formatString: #,0.00%;-#,0.00%;#,0.00%
+		lineageTag: 1a393eca-1bc5-4aeb-9cd1-3add9ae74a26
+
+	measure 'Loss-Making Sales PY' =
+			IF(
+			    HASONEVALUE('dwh dim_date'[calendar_year]),
+			    CALCULATE(
+			        [Loss-Making Sales],
+			        SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date])
+			    ),
+			    BLANK()
+			)
+		formatString: #,0.00
+		lineageTag: 874bb94e-e9f3-4fa4-91df-b3244399d17c
+
+	measure 'Loss-Making Sales YoY %' = DIVIDE([Loss-Making Sales] - [Loss-Making Sales PY], [Loss-Making Sales PY])
+		formatString: #,0.00%;-#,0.00%;#,0.00%
+		lineageTag: 3f5252c2-33da-4ff3-b479-205071639b92
+
+	measure 'Profitability Sales' = SUM('mart sales_profitability_monthly'[sales])
+		formatString: #,0.00
+		lineageTag: 1caa4381-6db3-449f-91bf-e299be7ae85c
+
+	measure 'Profitability Profit' = SUM('mart sales_profitability_monthly'[profit])
+		formatString: #,0.00
+		lineageTag: 56b14b41-0720-408c-9091-25910676ee3f
+
+	measure 'Profitability Margin' =
+			DIVIDE(
+			    [Profitability Profit],
+			    [Profitability Sales]
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 1178c2cd-3c56-446a-8df2-97a32b821473
+
+	measure 'Order Discount Sales' = SUM('mart order_discount_monthly'[sales])
+		formatString: #,0.00
+		lineageTag: d0005ce3-0693-4a38-a538-19fb1e73f5a9
+
+	measure 'Order Discount Profit' = SUM('mart order_discount_monthly'[profit])
+		formatString: #,0.00
+		lineageTag: 1332cdf2-eef4-42b1-b337-dc8463f91ecb
+
+	measure 'Order Discount Orders' = SUM('mart order_discount_monthly'[orders])
+		formatString: #,0
+		lineageTag: e89aee9b-fba5-4944-a857-2ba1020c198b
+
+	measure 'Order Discount Loss-Making Orders' = SUM('mart order_discount_monthly'[loss_making_orders])
+		formatString: #,0
+		lineageTag: a29432dd-abe3-4558-9acf-389f62bea40a
+
+	measure 'Order Discount Loss-Making Sales' = SUM('mart order_discount_monthly'[loss_making_sales])
+		formatString: #,0.00
+		lineageTag: 469e62f8-7e25-4ec5-9756-86e947a056eb
+
+	measure 'Order Discount Loss-Making Order Rate' = DIVIDE([Order Discount Loss-Making Orders], [Order Discount Orders])
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: d54171e9-1eb6-45d7-aa0d-0cfc317d7cc8
+
+	measure 'Line Sales Lines' = SUM('mart sales_line_profitability_monthly'[sales_lines])
+		formatString: #,0
+		lineageTag: 8ab817f5-8422-438b-ae9d-1342d35a1821
+
+	measure 'Line Sales' = SUM('mart sales_line_profitability_monthly'[sales])
+		formatString: #,0.00
+		lineageTag: 3f83347c-0b17-433d-b0ec-2ab02dfd7e2a
+
+	measure 'Line Profit' = SUM('mart sales_line_profitability_monthly'[profit])
+		formatString: #,0.00
+		lineageTag: 53e99aae-0d22-41fd-be26-bb5ead23b7e9
+
+	measure 'Line Profit Margin' = DIVIDE([Line Profit], [Line Sales])
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: eaa7a3cd-e1ba-41a7-aedb-865d7360a410
+
+	measure 'Line Profitable Sales Lines' = CALCULATE([Line Sales Lines], KEEPFILTERS('mart sales_line_profitability_monthly'[line_profitability_status] = "PROFITABLE"))
+		formatString: #,0
+		lineageTag: 5d22d816-9430-4b2f-a8a0-481bdd6497b4
+
+	measure 'Line Profitable Sales' = CALCULATE([Line Sales], KEEPFILTERS('mart sales_line_profitability_monthly'[line_profitability_status] = "PROFITABLE"))
+		formatString: #,0.00
+		lineageTag: d855d6ea-0aae-4c18-b569-8b9165e94702
+
+	measure 'Line Profitable Profit' = CALCULATE([Line Profit], KEEPFILTERS('mart sales_line_profitability_monthly'[line_profitability_status] = "PROFITABLE"))
+		formatString: #,0.00
+		lineageTag: 51d2ef7e-a0d9-4e3c-be00-a243a9c962d3
+
+	measure 'Line Loss-Making Sales Lines' = CALCULATE([Line Sales Lines], KEEPFILTERS('mart sales_line_profitability_monthly'[line_profitability_status] = "LOSS_MAKING"))
+		formatString: #,0
+		lineageTag: ae063994-2ea8-4c61-bd92-177ef8b143d6
+
+	measure 'Line Loss-Making Sales' = CALCULATE([Line Sales], KEEPFILTERS('mart sales_line_profitability_monthly'[line_profitability_status] = "LOSS_MAKING"))
+		formatString: #,0.00
+		lineageTag: 277733a2-e57a-4629-a077-3d13d3ec4c37
+
+	measure 'Line Loss' = CALCULATE([Line Profit], KEEPFILTERS('mart sales_line_profitability_monthly'[line_profitability_status] = "LOSS_MAKING"))
+		formatString: #,0.00
+		lineageTag: 3c27a561-d1f9-46b6-a7d5-56f183b6bd80
+
+	measure 'Line Profitable Margin' = DIVIDE([Line Profitable Profit], [Line Profitable Sales])
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 22c5d9b2-331a-404d-b9d4-d71163151bc2
+
+	measure 'Line Loss Margin' = DIVIDE([Line Loss], [Line Loss-Making Sales])
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: a904d030-8179-4d57-ab99-772aa345154a
+
+	measure 'Line Sales Lines PY' =
+			IF(
+			    HASONEVALUE('dwh dim_date'[calendar_year])
+			        && SELECTEDVALUE('dwh dim_date'[calendar_year]) > 2012,
+			    CALCULATE([Line Sales Lines], SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date])),
+			    BLANK()
+			)
+		formatString: #,0
+		lineageTag: dceaeb44-24aa-447e-8411-f1fd7b7e4709
+
+	measure 'Line Sales Lines YoY %' =
+			VAR CurrentValue = [Line Sales Lines]
+			VAR PreviousValue = [Line Sales Lines PY]
+			RETURN
+			    IF(
+			        ISBLANK(CurrentValue) || ISBLANK(PreviousValue),
+			        BLANK(),
+			        DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    )
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 3f1b74e6-99ef-4d21-9dc3-bb42a2f4fc00
+
+	measure 'Line Profitable Sales Lines PY' =
+			IF(
+			    HASONEVALUE('dwh dim_date'[calendar_year])
+			        && SELECTEDVALUE('dwh dim_date'[calendar_year]) > 2012,
+			    CALCULATE([Line Profitable Sales Lines], SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date])),
+			    BLANK()
+			)
+		formatString: #,0
+		lineageTag: 7edc5ccc-00f2-4cd8-bcf8-02659437f02f
+
+	measure 'Line Profitable Sales Lines YoY %' =
+			VAR CurrentValue = [Line Profitable Sales Lines]
+			VAR PreviousValue = [Line Profitable Sales Lines PY]
+			RETURN
+			    IF(
+			        ISBLANK(CurrentValue) || ISBLANK(PreviousValue),
+			        BLANK(),
+			        DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    )
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 2feb12a9-4aa3-4b71-afea-b26b56324613
+
+	measure 'Line Loss-Making Sales Lines PY' =
+			IF(
+			    HASONEVALUE('dwh dim_date'[calendar_year])
+			        && SELECTEDVALUE('dwh dim_date'[calendar_year]) > 2012,
+			    CALCULATE([Line Loss-Making Sales Lines], SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date])),
+			    BLANK()
+			)
+		formatString: #,0
+		lineageTag: 36198349-3fcb-4df9-bdc9-3c20d859f815
+
+	measure 'Line Loss-Making Sales Lines YoY %' =
+			VAR CurrentValue = [Line Loss-Making Sales Lines]
+			VAR PreviousValue = [Line Loss-Making Sales Lines PY]
+			RETURN
+			    IF(
+			        ISBLANK(CurrentValue) || ISBLANK(PreviousValue),
+			        BLANK(),
+			        DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    )
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 5684e8bd-9863-4a74-bd73-c1c55c6ce2ed
+
+	measure 'Line Loss-Making Sales PY' =
+			IF(
+			    HASONEVALUE('dwh dim_date'[calendar_year])
+			        && SELECTEDVALUE('dwh dim_date'[calendar_year]) > 2012,
+			    CALCULATE([Line Loss-Making Sales], SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date])),
+			    BLANK()
+			)
+		formatString: #,0.00
+		lineageTag: c62198c8-82ce-4b6e-90c2-d03c7eb6738c
+
+	measure 'Line Loss-Making Sales YoY %' =
+			VAR CurrentValue = [Line Loss-Making Sales]
+			VAR PreviousValue = [Line Loss-Making Sales PY]
+			RETURN
+			    IF(
+			        ISBLANK(CurrentValue) || ISBLANK(PreviousValue),
+			        BLANK(),
+			        DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    )
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 7bf59d8c-a644-41b8-b21d-0b348e206e56
+
+	measure 'Line Loss PY' =
+			IF(
+			    HASONEVALUE('dwh dim_date'[calendar_year])
+			        && SELECTEDVALUE('dwh dim_date'[calendar_year]) > 2012,
+			    CALCULATE([Line Loss], SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date])),
+			    BLANK()
+			)
+		formatString: #,0.00
+		lineageTag: 08678a19-ee44-4bb4-828b-ec4b43cf0740
+
+	measure 'Line Loss YoY %' =
+			VAR CurrentValue = [Line Loss]
+			VAR PreviousValue = [Line Loss PY]
+			RETURN
+			    IF(
+			        ISBLANK(CurrentValue) || ISBLANK(PreviousValue),
+			        BLANK(),
+			        DIVIDE(ABS(CurrentValue) - ABS(PreviousValue), ABS(PreviousValue))
+			    )
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 4b36716a-9460-41fa-b6f8-08a5e04d0099
+
+	measure 'Line Loss Margin PY' =
+			IF(
+			    HASONEVALUE('dwh dim_date'[calendar_year])
+			        && SELECTEDVALUE('dwh dim_date'[calendar_year]) > 2012,
+			    CALCULATE([Line Loss Margin], SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date])),
+			    BLANK()
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: fcdbeefe-b69a-493f-97c3-6e6eaddd56fb
+
+	measure 'Line Loss Margin Δ pp' =
+			VAR CurrentValue = [Line Loss Margin]
+			VAR PreviousValue = [Line Loss Margin PY]
+			RETURN
+			    IF(
+			        ISBLANK(CurrentValue) || ISBLANK(PreviousValue),
+			        BLANK(),
+			        (CurrentValue - PreviousValue) * 100
+			    )
+		formatString: 0.00
+		lineageTag: e7905564-f7d9-4bdf-a78a-7fa9a71a9899
+
+	measure 'Line Break-Even Sales Lines' =
+			CALCULATE(
+			    [Line Sales Lines],
+			    KEEPFILTERS(
+			        'mart sales_line_profitability_monthly'[line_profitability_status] = "BREAK_EVEN"
+			    )
+			)
+		formatString: #,0
+		lineageTag: db11ef78-8377-42c3-b871-9a2a3d8eaf15
+
+	measure 'Line Loss Impact %' = DIVIDE(ABS([Line Loss]), [Line Profitable Profit])
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 6ab6e238-3e0e-49bd-8af1-a617d865ecf4
+
+	measure 'Growth Quality' =
+			VAR Share = DIVIDE([Line Loss-Making Sales Lines], [Line Sales Lines])
+			VAR SharePY = DIVIDE([Line Loss-Making Sales Lines PY], [Line Sales Lines PY])
+			VAR Delta = ROUND((Share - SharePY) * 100, 2)
+			VAR CurrentText = "Loss-making line share " & FORMAT(Share, "0.00%", "en-US")
+			RETURN
+			    SWITCH(
+			        TRUE(),
+			        ISBLANK(Share), "No sales lines in the selected period.",
+			        ISBLANK(SharePY), CurrentText & UNICHAR(10) & "Prior-year comparison is unavailable.",
+			        CurrentText & " | PY " & FORMAT(SharePY, "0.00%", "en-US")
+			            & UNICHAR(10)
+			            & "Change vs PY: " & FORMAT(IF(Delta = 0, 0, Delta), "+0.00;-0.00;0.00", "en-US") & " pp"
+			    )
+		displayFolder: Business Insights
+		lineageTag: d2362aa1-7f15-42c4-a2cf-f40e140936af
+
+	measure 'Loss Exposure' =
+			VAR FocusCategories = {"30%+", "MIXED"}
+			VAR TotalLoss =
+			    CALCULATE([Order Discount Loss], REMOVEFILTERS('OrderDiscountCategory'))
+			VAR FocusLoss =
+			    CALCULATE([Order Discount Loss], REMOVEFILTERS('OrderDiscountCategory'),
+			        'OrderDiscountCategory'[order_discount_category] IN FocusCategories)
+			VAR Share = DIVIDE(FocusLoss, TotalLoss)
+			VAR HasPY = HASONEVALUE('dwh dim_date'[calendar_year])
+			VAR TotalLossPY =
+			    IF(HasPY, CALCULATE([Order Discount Loss], REMOVEFILTERS('OrderDiscountCategory'),
+			        SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date])))
+			VAR FocusLossPY =
+			    IF(HasPY, CALCULATE([Order Discount Loss], REMOVEFILTERS('OrderDiscountCategory'),
+			        'OrderDiscountCategory'[order_discount_category] IN FocusCategories,
+			        SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date])))
+			VAR SharePY = DIVIDE(FocusLossPY, TotalLossPY)
+			VAR CurrentText =
+			    "30%+ and MIXED: " & FORMAT(Share, "0.00%", "en-US") & " of order-level loss"
+			        & UNICHAR(10)
+			        & FORMAT(FocusLoss / 1000, "#,0.0", "en-US") & "K of "
+			        & FORMAT(TotalLoss / 1000, "#,0.0", "en-US") & "K"
+			RETURN
+			    SWITCH(
+			        TRUE(),
+			        ISBLANK(Share), "No order-level loss in the selected period.",
+			        ISBLANK(SharePY), CurrentText & " | Prior-year comparison is unavailable.",
+			        CurrentText & " | PY " & FORMAT(SharePY, "0.00%", "en-US")
+			    )
+		displayFolder: Business Insights
+		lineageTag: a037139c-2cd9-4721-b0a7-145610a79970
+
+	measure 'Margin Watch' =
+			VAR HighDiscountGroups = {"20–30%", "30%+"}
+			VAR TotalSales =
+			    CALCULATE([Profitability Sales], REMOVEFILTERS('BusinessDiscountGroup'))
+			VAR GroupSales =
+			    CALCULATE([Profitability Sales], REMOVEFILTERS('BusinessDiscountGroup'),
+			        'BusinessDiscountGroup'[discount_group] IN HighDiscountGroups)
+			VAR GroupProfit =
+			    CALCULATE([Profitability Profit], REMOVEFILTERS('BusinessDiscountGroup'),
+			        'BusinessDiscountGroup'[discount_group] IN HighDiscountGroups)
+			VAR HasPY = HASONEVALUE('dwh dim_date'[calendar_year])
+			VAR TotalSalesPY =
+			    IF(HasPY, CALCULATE([Profitability Sales], REMOVEFILTERS('BusinessDiscountGroup'),
+			        SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date])))
+			VAR GroupSalesPY =
+			    IF(HasPY, CALCULATE([Profitability Sales], REMOVEFILTERS('BusinessDiscountGroup'),
+			        'BusinessDiscountGroup'[discount_group] IN HighDiscountGroups,
+			        SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date])))
+			VAR GroupProfitPY =
+			    IF(HasPY, CALCULATE([Profitability Profit], REMOVEFILTERS('BusinessDiscountGroup'),
+			        'BusinessDiscountGroup'[discount_group] IN HighDiscountGroups,
+			        SAMEPERIODLASTYEAR('dwh dim_date'[calendar_date])))
+			VAR MoneyK = "#,0.0;-#,0.0;0.0"
+			VAR CurrentText =
+			    "Discount 20–30% and 30%+: " & FORMAT(DIVIDE(GroupSales, TotalSales), "0.00%", "en-US")
+			        & " of Sales | Profit " & FORMAT(GroupProfit / 1000, MoneyK, "en-US") & "K"
+			RETURN
+			    SWITCH(
+			        TRUE(),
+			        ISBLANK(TotalSales), "No sales in the selected period.",
+			        ISBLANK(TotalSalesPY), CurrentText & UNICHAR(10) & "Prior-year comparison is unavailable.",
+			        CurrentText & UNICHAR(10)
+			            & "PY: " & FORMAT(DIVIDE(GroupSalesPY, TotalSalesPY), "0.00%", "en-US")
+			            & " of Sales | Profit " & FORMAT(GroupProfitPY / 1000, MoneyK, "en-US") & "K"
+			    )
+		displayFolder: Business Insights
+		lineageTag: df38ed97-5df5-4931-bb6b-f6eb46bf19ee
+
+	measure 'Order Discount Loss' = SUM('mart order_discount_monthly'[loss])
+		formatString: #,0.00
+		lineageTag: 4c157762-5b70-420a-85aa-d0dd4fd47d98
+
+	measure 'Geo Sales' = SUM('mart geographic_monthly'[sales])
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Market Performance\Base
+		lineageTag: 767adb4b-cb51-44ce-999b-3daeae27ce2a
+
+	measure 'Geo Profit' = SUM('mart geographic_monthly'[profit])
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Market Performance\Base
+		lineageTag: 0c0cc51c-2b44-4c59-be2a-bbfb01346906
+
+	measure 'Geo Profit Margin' = DIVIDE([Geo Profit],[Geo Sales])
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Market Performance\Base
+		lineageTag: 9d5e76b6-5ffb-49f3-8f67-222a7e63644b
+
+	measure 'Geo Orders' = SUM('mart geographic_monthly'[orders])
+		formatString: #,0
+		displayFolder: Market Performance\Base
+		lineageTag: 0d9df678-bc20-457a-8edd-a5f229d92efc
+
+	measure 'Geo Unprofitable Orders' = SUM('mart geographic_monthly'[unprofitable_orders])
+		formatString: #,0
+		displayFolder: Market Performance\Base
+		lineageTag: 19de5d55-0407-4aa3-8adc-a77aacdfddcd
+
+	measure 'Geo Unprofitable Order Rate' = DIVIDE([Geo Unprofitable Orders],[Geo Orders])
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Market Performance\Base
+		lineageTag: 376e1c9e-138c-4eaf-8e32-a84482a77f8e
+
+	measure 'Geo Sales PY' =
+			VAR M=SELECTCOLUMNS(VALUES('dwh dim_date'[YearMonthSort]),"PriorMonth",'dwh dim_date'[YearMonthSort]-100)
+			RETURN IF(HASONEVALUE('dwh dim_date'[calendar_year]),CALCULATE([Geo Sales],REMOVEFILTERS('dwh dim_date'),TREATAS(M,'dwh dim_date'[YearMonthSort])))
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Market Performance\Comparison
+		lineageTag: a3e2e2eb-e27f-486b-99c0-01ed2a7c4f8e
+
+	measure 'Geo Profit PY' =
+			VAR M=SELECTCOLUMNS(VALUES('dwh dim_date'[YearMonthSort]),"PriorMonth",'dwh dim_date'[YearMonthSort]-100)
+			RETURN IF(HASONEVALUE('dwh dim_date'[calendar_year]),CALCULATE([Geo Profit],REMOVEFILTERS('dwh dim_date'),TREATAS(M,'dwh dim_date'[YearMonthSort])))
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Market Performance\Comparison
+		lineageTag: b8f55b4c-5d18-4869-9c8a-91fb27c02d65
+
+	measure 'Geo Sales YoY %' = VAR C=[Geo Sales] VAR P=[Geo Sales PY] RETURN IF(NOT ISBLANK(C)&&NOT ISBLANK(P),DIVIDE(C-P,P))
+		formatString: +0.00%;-0.00%;0.00%
+		displayFolder: Market Performance\Comparison
+		lineageTag: d873dc26-d35a-4012-a5db-01dc0ce5dfa0
+
+	measure 'Geo Profit Change vs PY' = VAR C=[Geo Profit] VAR P=[Geo Profit PY] RETURN IF(NOT ISBLANK(C)&&NOT ISBLANK(P),C-P)
+		formatString: +#,0.00;-#,0.00;0.00
+		displayFolder: Market Performance\Comparison
+		lineageTag: f04be620-5677-4ff7-a028-b884f3a9a338
+
+	measure 'Geo Profit Margin Δ PY pp' = VAR C=[Geo Profit Margin] VAR P=DIVIDE([Geo Profit PY],[Geo Sales PY]) RETURN IF(NOT ISBLANK(C)&&NOT ISBLANK(P),(C-P)*100)
+		formatString: +0.00;-0.00;0.00
+		displayFolder: Market Performance\Comparison
+		lineageTag: ddc4e940-6345-438f-a230-c912fb90e453
+
+	measure 'Geo Active Countries' = COALESCE(COUNTROWS(FILTER(VALUES('dwh dim_geography'[country]),NOT ISBLANK([Geo Sales]))),0)
+		formatString: #,0
+		displayFolder: Market Performance\Countries
+		lineageTag: 3a23c5fd-91ab-4f57-b95c-0c1ae3c13694
+
+	measure 'Geo Loss-Making Countries' = COALESCE(COUNTROWS(FILTER(VALUES('dwh dim_geography'[country]),NOT ISBLANK([Geo Profit])&&[Geo Profit]<0)),0)
+		formatString: #,0
+		displayFolder: Market Performance\Countries
+		lineageTag: b0ad4b6a-031f-450c-9154-f911f9282a49
+
+	measure 'Geo Net Loss in Loss-Making Countries' = IF(ISBLANK([Geo Sales]),BLANK(),COALESCE(SUMX(FILTER(VALUES('dwh dim_geography'[country]),NOT ISBLANK([Geo Profit])&&[Geo Profit]<0),[Geo Profit]),0))
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Market Performance\Countries
+		lineageTag: 7b3c16d3-d130-4e3d-9471-c6bb0f565107
+
+	measure 'Geo Insight Scale & Return' =
+			VAR ScopeSales = [Geo Sales]
+			VAR ScopeProfit = [Geo Profit]
+			VAR AllSales = CALCULATE([Geo Sales], REMOVEFILTERS('dwh dim_geography'))
+			VAR AllProfit = CALCULATE([Geo Profit], REMOVEFILTERS('dwh dim_geography'))
+			VAR Markets =
+			    FILTER(
+			        ADDCOLUMNS(VALUES('dwh dim_geography'[market]), "__S", [Geo Sales], "__P", [Geo Profit]),
+			        NOT ISBLANK([__S])
+			    )
+			VAR Leader = TOPN(1, Markets, [__S], DESC, 'dwh dim_geography'[market], ASC)
+			VAR LeaderName = CONCATENATEX(Leader, 'dwh dim_geography'[market], "")
+			VAR LeaderSales = SUMX(Leader, [__S])
+			VAR LeaderProfit = SUMX(Leader, [__P])
+			RETURN
+			    SWITCH(
+			        TRUE(),
+			        ISBLANK(ScopeSales), "No data for the selected period.",
+			        COUNTROWS(Markets) = 1,
+			            [Geo Territory Context] & ": "
+			                & FORMAT(DIVIDE(ScopeSales, AllSales), "0.00%", "en-US") & " of all-market Sales"
+			                & UNICHAR(10)
+			                & FORMAT(DIVIDE(ScopeProfit, AllProfit), "0.00%", "en-US") & " of all-market Profit",
+			        "Largest market by Sales: " & LeaderName
+			            & UNICHAR(10)
+			            & FORMAT(DIVIDE(LeaderSales, ScopeSales), "0.00%", "en-US") & " of Sales | "
+			            & FORMAT(DIVIDE(LeaderProfit, ScopeProfit), "0.00%", "en-US") & " of Profit"
+			    )
+		displayFolder: Market Performance\Insights
+		lineageTag: 96d0e234-2d09-4e71-82a8-274fbd7a0027
+
+	measure 'Geo Insight Change Watch' =
+			VAR Regions =
+			    FILTER(
+			        ADDCOLUMNS(VALUES('dwh dim_geography'[region]), "__D", [Geo Profit Change vs PY]),
+			        NOT ISBLANK([__D])
+			    )
+			VAR RegionCount = COUNTROWS(Regions)
+			VAR Higher = COUNTROWS(FILTER(Regions, [__D] > 0)) + 0
+			VAR Lower = COUNTROWS(FILTER(Regions, [__D] < 0)) + 0
+			VAR MinRow = TOPN(1, Regions, [__D], ASC, 'dwh dim_geography'[region], ASC)
+			VAR MaxRow = TOPN(1, Regions, [__D], DESC, 'dwh dim_geography'[region], ASC)
+			VAR SignedK = "+#,0.0;-#,0.0;0.0"
+			VAR MinText =
+			    CONCATENATEX(MinRow, 'dwh dim_geography'[region], "") & " "
+			        & FORMAT(SUMX(MinRow, [__D]) / 1000, SignedK, "en-US") & "K"
+			VAR MaxText =
+			    CONCATENATEX(MaxRow, 'dwh dim_geography'[region], "") & " "
+			        & FORMAT(SUMX(MaxRow, [__D]) / 1000, SignedK, "en-US") & "K"
+			RETURN
+			    SWITCH(
+			        TRUE(),
+			        ISBLANK([Geo Sales]), "No data for the selected period.",
+			        ISBLANK(RegionCount), "Prior-year comparison is unavailable.",
+			        RegionCount = 1, "Profit change vs PY: " & MaxText,
+			        "Regions vs PY Profit: " & Higher & " higher | " & Lower & " lower"
+			            & UNICHAR(10)
+			            & "Min: " & MinText & " | Max: " & MaxText
+			    )
+		displayFolder: Market Performance\Insights
+		lineageTag: 8c6cce8a-2f45-4446-aa97-d17955a8acc8
+
+	measure 'Geo Insight Country Loss Concentration' =
+			VAR HasPY = HASONEVALUE('dwh dim_date'[calendar_year])
+			VAR PriorMonths =
+			    SELECTCOLUMNS(VALUES('dwh dim_date'[YearMonthSort]), "PriorMonth", 'dwh dim_date'[YearMonthSort] - 100)
+			VAR SalesPY =
+			    IF(HasPY, CALCULATE([Geo Sales],
+			        REMOVEFILTERS('dwh dim_date'), TREATAS(PriorMonths, 'dwh dim_date'[YearMonthSort])))
+			VAR T =
+			    ADDCOLUMNS(
+			        VALUES('dwh dim_geography'[country]),
+			        "__P", [Geo Profit],
+			        "__PY", CALCULATE([Geo Profit],
+			            REMOVEFILTERS('dwh dim_date'), TREATAS(PriorMonths, 'dwh dim_date'[YearMonthSort])))
+			VAR Both = FILTER(T, NOT ISBLANK([__P]) && [__P] < 0 && NOT ISBLANK([__PY]) && [__PY] < 0)
+			VAR NewL = FILTER(T, NOT ISBLANK([__P]) && [__P] < 0 && NOT (NOT ISBLANK([__PY]) && [__PY] < 0))
+			VAR Exited = FILTER(T, NOT ISBLANK([__PY]) && [__PY] < 0 && NOT (NOT ISBLANK([__P]) && [__P] < 0))
+			VAR BothN = COUNTROWS(Both) + 0
+			VAR NewN = COUNTROWS(NewL) + 0
+			VAR ExitedN = COUNTROWS(Exited) + 0
+			VAR BothLoss = SUMX(Both, [__P]) + 0
+			VAR BothLossPY = SUMX(Both, [__PY]) + 0
+			VAR NewLoss = SUMX(NewL, [__P]) + 0
+			VAR MoneyK = "#,0.0;-#,0.0;0.0"
+			RETURN
+			    SWITCH(
+			        TRUE(),
+			        ISBLANK([Geo Sales]), "No data for the selected period.",
+			        NOT HasPY || ISBLANK(SalesPY), "Prior-year comparison is unavailable.",
+			        BothN + NewN + ExitedN = 0, "No loss-making countries in the selected period or PY.",
+			        "Loss-making both years: " & FORMAT(BothN, "#,0", "en-US")
+			            & " | " & FORMAT(BothLoss / 1000, MoneyK, "en-US") & "K"
+			            & " vs PY " & FORMAT(BothLossPY / 1000, MoneyK, "en-US") & "K"
+			            & UNICHAR(10)
+			            & "New loss-making: " & FORMAT(NewN, "#,0", "en-US")
+			            & " | " & FORMAT(NewLoss / 1000, MoneyK, "en-US") & "K"
+			            & " | No longer: " & FORMAT(ExitedN, "#,0", "en-US")
+			    )
+		displayFolder: Market Performance\Insights
+		lineageTag: 12ebd8e0-07d3-41e8-9b19-2675ad361050
+
+	measure 'Geo Territory Context' =
+			VAR __GeoC=VALUES('dwh dim_geography'[country])
+			VAR __GeoR=VALUES('dwh dim_geography'[region])
+			VAR __GeoM=VALUES('dwh dim_geography'[market])
+			RETURN SWITCH(TRUE(),
+			HASONEVALUE('dwh dim_geography'[country])&&HASONEVALUE('dwh dim_geography'[region]),SELECTEDVALUE('dwh dim_geography'[country]) & " · " & SELECTEDVALUE('dwh dim_geography'[region]),
+			HASONEVALUE('dwh dim_geography'[country]),SELECTEDVALUE('dwh dim_geography'[country]),
+			HASONEVALUE('dwh dim_geography'[region]),SELECTEDVALUE('dwh dim_geography'[region]),
+			HASONEVALUE('dwh dim_geography'[market]),SELECTEDVALUE('dwh dim_geography'[market]),
+			ISFILTERED('dwh dim_geography'[country])||ISFILTERED('dwh dim_geography'[region])||ISFILTERED('dwh dim_geography'[market]),"Selected territories",
+			"All markets")
+		displayFolder: Market Performance\Display
+		lineageTag: 8f0f5c3c-4da9-4d65-9065-7428390f408b
+
+	measure 'Geo Country Coverage Label' =
+			IF(
+			    ISBLANK([Geo Sales]),
+			    "No data for the selected period.",
+			    "Loss-making countries: "
+			        & FORMAT([Geo Loss-Making Countries], "#,0")
+			        & " of "
+			        & FORMAT([Geo Active Countries], "#,0")
+			        & " active"
+			)
+		displayFolder: Market Performance\Display
+		lineageTag: 598273f3-3218-485d-b5e3-6bb4a2f14474
+
+	measure 'Geo Coverage Prefix' = IF(ISBLANK([Geo Sales]), "No data for the selected period.", "Loss-making countries: ")
+		displayFolder: Market Performance\Display
+		lineageTag: 830d011e-fa6a-416a-b366-7ad99dc40493
+
+	measure 'Geo Coverage Positive Count' = IF(NOT ISBLANK([Geo Sales]) && [Geo Loss-Making Countries] > 0, FORMAT([Geo Loss-Making Countries], "#,0"), "")
+		displayFolder: Market Performance\Display
+		lineageTag: 4202e6c7-ac33-42d1-9bae-993badc0a620
+
+	measure 'Geo Coverage Suffix' = IF(ISBLANK([Geo Sales]), "", IF([Geo Loss-Making Countries] = 0, "0", "") & " of " & FORMAT([Geo Active Countries], "#,0") & " active")
+		displayFolder: Market Performance\Display
+		lineageTag: 9ec17ae9-91fd-4036-8c77-ea461dd3e891
+
+	measure 'Geo Country Loss Display Flag' =
+			VAR Countries = ADDCOLUMNS(ALLSELECTED('dwh dim_geography'[country]), "__Profit", [Geo Profit])
+			VAR LossCountries = FILTER(Countries, NOT ISBLANK([__Profit]) && [__Profit] < 0)
+			VAR Worst = TOPN(10, LossCountries, [__Profit], ASC, 'dwh dim_geography'[country], ASC)
+			VAR CurrentCountry = SELECTEDVALUE('dwh dim_geography'[country])
+			RETURN IF(NOT ISBLANK(CurrentCountry) && CONTAINS(Worst, 'dwh dim_geography'[country], CurrentCountry), 1, 0)
+		formatString: 0
+		displayFolder: Market Performance\Display
+		lineageTag: 4c8f3e27-6922-400c-8527-5b68b5501e79
+
+	measure 'Geo Country Net Loss Share %' =
+			VAR CountryProfit = [Geo Profit]
+			VAR ScopeLoss = CALCULATE([Geo Net Loss in Loss-Making Countries], ALLSELECTED('dwh dim_geography'[country]))
+			RETURN IF(NOT ISBLANK(CountryProfit) && CountryProfit < 0, DIVIDE(ABS(CountryProfit), ABS(ScopeLoss)))
+		formatString: 0.00%
+		displayFolder: Market Performance\Countries
+		lineageTag: c62dabe8-aab0-42df-af83-e698612d4b1f
+
+	measure 'Geo Top 10 Country Net Loss Share %' =
+			VAR Countries = ADDCOLUMNS(ALLSELECTED('dwh dim_geography'[country]), "__Profit", [Geo Profit])
+			VAR LossCountries = FILTER(Countries, NOT ISBLANK([__Profit]) && [__Profit] < 0)
+			VAR Worst = TOPN(10, LossCountries, [__Profit], ASC, 'dwh dim_geography'[country], ASC)
+			VAR ScopeLoss = CALCULATE([Geo Net Loss in Loss-Making Countries], ALLSELECTED('dwh dim_geography'[country]))
+			RETURN DIVIDE(ABS(SUMX(Worst, [__Profit])), ABS(ScopeLoss))
+		formatString: 0.00%
+		displayFolder: Market Performance\Countries
+		lineageTag: 913e71bc-11ec-4ecf-ab7a-84006ce26d52
+
+	measure 'Geo Country Loss Coverage Label' =
+			VAR ScopeSales = CALCULATE([Geo Sales], ALLSELECTED('dwh dim_geography'[country]))
+			VAR CountryCount = CALCULATE([Geo Loss-Making Countries], ALLSELECTED('dwh dim_geography'[country]))
+			VAR ShownCount = MIN(10, CountryCount)
+			VAR Share = [Geo Top 10 Country Net Loss Share %]
+			RETURN SWITCH(TRUE(),
+			    ISBLANK(ScopeSales), "No data for the selected period.",
+			    CountryCount = 0, "No loss-making countries in the selected period.",
+			    "Top " & FORMAT(ShownCount, "0", "en-US") & " of " & FORMAT(CountryCount, "#,0", "en-US")
+			        & " loss-making countries: " & FORMAT(Share, "0.00%", "en-US") & " of Net Loss.")
+		displayFolder: Market Performance\Display
+		lineageTag: ca99aa69-9411-489b-b4c3-8218413ee206
+
+	measure 'Geo Country Market Label' =
+			VAR CurrentSales = [Geo Sales]
+			VAR MarketCount = COUNTROWS(VALUES('dwh dim_geography'[market]))
+			RETURN IF(ISINSCOPE('dwh dim_geography'[country]) && NOT ISBLANK(CurrentSales),
+			    IF(MarketCount = 1, SELECTEDVALUE('dwh dim_geography'[market]), "Multiple"))
+		displayFolder: Market Performance\Display
+		lineageTag: 35aa2d23-8d54-4d5d-aa8b-8a598b6a50d4
+
+	measure 'Geo Country Detail Context' =
+			VAR CurrentSales = [Geo Sales]
+			VAR CountryCount = COUNTROWS(VALUES('dwh dim_geography'[country]))
+			RETURN SWITCH(TRUE(),
+			    ISBLANK(CurrentSales), "No data for the selected period.",
+			    NOT ISFILTERED('dwh dim_geography'[country]), "Detail: all active countries in current scope",
+			    CountryCount = 1, "Detail: " & SELECTEDVALUE('dwh dim_geography'[country]),
+			    "Detail: " & FORMAT(CountryCount, "#,0", "en-US") & " selected countries")
+		displayFolder: Market Performance\Display
+		lineageTag: e6e370cf-f0e4-4d5c-bf76-d2f51d9faece
+
+	measure 'Geo Country Count Label' =
+			VAR N = [Geo Active Countries]
+			RETURN FORMAT(N, "#,0", "en-US") & IF(N = 1, " country", " countries")
+		displayFolder: Market Performance\Display
+		lineageTag: 6013b7f2-be31-41a3-a296-8049b37f7532
+
+	measure 'Prod Sales' = SUM('mart product_monthly'[sales])
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Product Portfolio\Base
+		lineageTag: 329d85d5-594b-49e8-9b5b-5619b1ec0f34
+
+	measure 'Prod Profit' = SUM('mart product_monthly'[profit])
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Product Portfolio\Base
+		lineageTag: d0597896-3532-4b26-9a02-ae588b41a3ba
+
+	measure 'Prod Profit Margin' = DIVIDE([Prod Profit],[Prod Sales])
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Product Portfolio\Base
+		lineageTag: f579af23-a1fa-44d4-ae5b-c61363589744
+
+	measure 'Prod Sales PY' =
+			VAR M=SELECTCOLUMNS(VALUES('dwh dim_date'[YearMonthSort]),"PriorMonth",'dwh dim_date'[YearMonthSort]-100)
+			RETURN IF(HASONEVALUE('dwh dim_date'[calendar_year]),CALCULATE([Prod Sales],REMOVEFILTERS('dwh dim_date'),TREATAS(M,'dwh dim_date'[YearMonthSort])))
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Product Portfolio\PY
+		lineageTag: 223990cb-9ae7-4840-a3a3-206d95a5a450
+
+	measure 'Prod Profit PY' =
+			VAR M=SELECTCOLUMNS(VALUES('dwh dim_date'[YearMonthSort]),"PriorMonth",'dwh dim_date'[YearMonthSort]-100)
+			RETURN IF(HASONEVALUE('dwh dim_date'[calendar_year]),CALCULATE([Prod Profit],REMOVEFILTERS('dwh dim_date'),TREATAS(M,'dwh dim_date'[YearMonthSort])))
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Product Portfolio\PY
+		lineageTag: 2b4154da-8ae0-4167-81a4-99bf88b01ee2
+
+	measure 'Prod Sales YoY %' = VAR C=[Prod Sales] VAR P=[Prod Sales PY] RETURN IF(NOT ISBLANK(C)&&NOT ISBLANK(P),DIVIDE(C-P,P))
+		formatString: +0.00%;-0.00%;0.00%
+		displayFolder: Product Portfolio\PY
+		lineageTag: b01aa616-73d1-4aec-b53f-f69fd20d4fd3
+
+	measure 'Prod Profit Change vs PY' = VAR C=[Prod Profit] VAR P=[Prod Profit PY] RETURN IF(NOT ISBLANK(C)&&NOT ISBLANK(P),C-P)
+		formatString: +#,0.00;-#,0.00;0.00
+		displayFolder: Product Portfolio\PY
+		lineageTag: cdce65a7-5088-4db1-88f4-b7844b599ea0
+
+	measure 'Prod Profit Margin Δ PY pp' = VAR C=[Prod Profit Margin] VAR P=DIVIDE([Prod Profit PY],[Prod Sales PY]) RETURN IF(NOT ISBLANK(C)&&NOT ISBLANK(P),(C-P)*100)
+		formatString: +0.00;-0.00;0.00
+		displayFolder: Product Portfolio\PY
+		lineageTag: be9ba866-0ffc-45c7-a254-36fb6bf9dcb7
+
+	measure 'Prod Loss-Making Products' = COALESCE(COUNTROWS(FILTER(VALUES('dwh dim_product'[product_key]),NOT ISBLANK([Prod Profit])&&[Prod Profit]<0)),0)
+		formatString: #,0
+		displayFolder: Product Portfolio\Loss
+		lineageTag: 41a2513b-2e11-4c40-b97e-e33d042c5496
+
+	measure 'Prod Net Loss in Loss-Making Products' = IF(ISBLANK([Prod Sales]),BLANK(),COALESCE(SUMX(FILTER(VALUES('dwh dim_product'[product_key]),NOT ISBLANK([Prod Profit])&&[Prod Profit]<0),[Prod Profit]),0))
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Product Portfolio\Loss
+		lineageTag: e9b84407-6f39-4ffd-bbc6-4ad611b31d4c
+
+	measure 'Prod Insight Sub-Category' =
+			VAR SubCats =
+			    FILTER(
+			        ADDCOLUMNS(VALUES('dwh dim_product'[sub_category]), "__D", [Prod Profit Change vs PY]),
+			        NOT ISBLANK([__D])
+			    )
+			VAR SubCatCount = COUNTROWS(SubCats)
+			VAR Higher = COUNTROWS(FILTER(SubCats, [__D] > 0)) + 0
+			VAR Lower = COUNTROWS(FILTER(SubCats, [__D] < 0)) + 0
+			VAR UpRow = TOPN(1, FILTER(SubCats, [__D] > 0), [__D], DESC, 'dwh dim_product'[sub_category], ASC)
+			VAR DownRow = TOPN(1, FILTER(SubCats, [__D] < 0), [__D], ASC, 'dwh dim_product'[sub_category], ASC)
+			VAR SignedK = "+#,0.0;-#,0.0;0.0"
+			VAR UpText =
+			    IF(Higher = 0, "none",
+			        CONCATENATEX(UpRow, 'dwh dim_product'[sub_category], "") & " "
+			            & FORMAT(SUMX(UpRow, [__D]) / 1000, SignedK, "en-US") & "K")
+			VAR DownText =
+			    IF(Lower = 0, "none",
+			        CONCATENATEX(DownRow, 'dwh dim_product'[sub_category], "") & " "
+			            & FORMAT(SUMX(DownRow, [__D]) / 1000, SignedK, "en-US") & "K")
+			RETURN
+			    SWITCH(
+			        TRUE(),
+			        ISBLANK([Prod Sales]), "No data for the selected period.",
+			        ISBLANK(SubCatCount), "Prior-year comparison is unavailable.",
+			        SubCatCount = 1,
+			            "Profit change vs PY: " & CONCATENATEX(SubCats, 'dwh dim_product'[sub_category], "") & " "
+			                & FORMAT(SUMX(SubCats, [__D]) / 1000, SignedK, "en-US") & "K",
+			        "Sub-categories vs PY Profit: " & Higher & " higher | " & Lower & " lower of " & SubCatCount
+			            & UNICHAR(10)
+			            & "Largest rise: " & UpText & " | Largest drop: " & DownText
+			    )
+		displayFolder: Product Portfolio\Insight
+		lineageTag: 2245e361-8ddc-4868-a6fd-54b0426030f0
+
+	measure 'Prod Sales 30%+' = CALCULATE([Prod Sales], KEEPFILTERS('mart product_monthly'[discount_group] = "30%+"))
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Product Portfolio\Discount
+		lineageTag: 74aac751-002d-4604-b573-55140a8c46b5
+
+	measure 'Prod Profit 30%+' = CALCULATE([Prod Profit], KEEPFILTERS('mart product_monthly'[discount_group] = "30%+"))
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Product Portfolio\Discount
+		lineageTag: 73d6cb61-1acf-4153-b530-b9feba366c71
+
+	measure 'Prod Sales Share 30%+ %' = DIVIDE([Prod Sales 30%+], [Prod Sales])
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Product Portfolio\Discount
+		lineageTag: 32e740f3-7c9a-42d4-97d3-bae01c6beffd
+
+	measure 'Prod Profit excl. 30%+' = IF(NOT ISBLANK([Prod Sales]), [Prod Profit] - COALESCE([Prod Profit 30%+], 0))
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Product Portfolio\Discount
+		lineageTag: c0e7b35d-d10b-4e65-8ba8-8f14551a462f
+
+	measure 'Prod Margin excl. 30%+' = DIVIDE([Prod Profit] - COALESCE([Prod Profit 30%+], 0), [Prod Sales] - COALESCE([Prod Sales 30%+], 0))
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Product Portfolio\Discount
+		lineageTag: 4d03ce44-267f-41ba-9792-b53e3fb97dda
+
+	measure 'Geo Sales 30%+' = SUM('mart geographic_monthly'[sales_30plus])
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Market Performance\Discount
+		lineageTag: 4ea8a576-9b8c-4ffe-9894-8a6fa4f7e4f8
+
+	measure 'Geo Profit 30%+' = SUM('mart geographic_monthly'[profit_30plus])
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Market Performance\Discount
+		lineageTag: 6e6ae3cf-289c-44e2-95f9-5b3d625f9d3e
+
+	measure 'Geo Sales Share 30%+ %' = DIVIDE([Geo Sales 30%+], [Geo Sales])
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Market Performance\Discount
+		lineageTag: 912b6f7a-7560-4e4b-bf1a-2f8ddb1ac3a6
+
+	measure 'Prod Insight Discount Loss' =
+			VAR T =
+			    FILTER(
+			        ADDCOLUMNS(
+			            VALUES('dwh dim_product'[product_key]),
+			            "__P", [Prod Profit],
+			            "__P30", [Prod Profit 30%+],
+			            "__P0", CALCULATE([Prod Profit], KEEPFILTERS('mart product_monthly'[discount_group] = "0%")),
+			            "__S0", CALCULATE([Prod Sales], KEEPFILTERS('mart product_monthly'[discount_group] = "0%"))),
+			        NOT ISBLANK([__P]) && [__P] < 0)
+			VAR LossN = COUNTROWS(T) + 0
+			VAR LossTotal = SUMX(T, [__P]) + 0
+			VAR Loss30 = SUMX(T, [__P30]) + 0
+			VAR Loss0 = SUMX(T, [__P0]) + 0
+			VAR LossOther = LossTotal - Loss30 - Loss0
+			VAR OnlyDisc = FILTER(T, ISBLANK([__S0]))
+			VAR SignedK = "+#,0.0;-#,0.0;0.0"
+			RETURN
+			    SWITCH(
+			        TRUE(),
+			        ISBLANK([Prod Sales]), "No data for the selected period.",
+			        LossN = 0, "No loss-making products in the selected period.",
+			        "Loss-making products: 30%+ " & FORMAT(Loss30 / 1000, SignedK, "en-US") & "K"
+			            & " | other discounts " & FORMAT(LossOther / 1000, SignedK, "en-US") & "K"
+			            & " | no discount " & FORMAT(Loss0 / 1000, SignedK, "en-US") & "K"
+			            & UNICHAR(10)
+			            & "Sold only with discount: " & FORMAT(COUNTROWS(OnlyDisc) + 0, "#,0", "en-US")
+			            & " | " & FORMAT((SUMX(OnlyDisc, [__P]) + 0) / 1000, SignedK, "en-US") & "K"
+			    )
+		displayFolder: Product Portfolio\Insight
+		lineageTag: f663def4-c406-457c-ac85-4626c4214546
+
+	measure 'Prod Insight Discount Mix' =
+			VAR S = [Prod Sales]
+			VAR SPY = [Prod Sales PY]
+			VAR S30 = COALESCE([Prod Sales 30%+], 0)
+			VAR P30 = COALESCE([Prod Profit 30%+], 0)
+			VAR S30PY = COALESCE(CALCULATE([Prod Sales PY], KEEPFILTERS('mart product_monthly'[discount_group] = "30%+")), 0)
+			VAR P30PY = COALESCE(CALCULATE([Prod Profit PY], KEEPFILTERS('mart product_monthly'[discount_group] = "30%+")), 0)
+			VAR M = DIVIDE([Prod Profit] - P30, S - S30)
+			VAR MPY = DIVIDE([Prod Profit PY] - P30PY, SPY - S30PY)
+			VAR Pct = "0.0%"
+			VAR SignedK = "+#,0.0;-#,0.0;0.0"
+			RETURN
+			    SWITCH(
+			        TRUE(),
+			        ISBLANK(S), "No data for the selected period.",
+			        ISBLANK(SPY), "Prior-year comparison is unavailable.",
+			        "30%+ discount: " & FORMAT(DIVIDE(S30, S), Pct, "en-US")
+			            & " of sales (PY " & FORMAT(DIVIDE(S30PY, SPY), Pct, "en-US") & ")"
+			            & " | Profit " & FORMAT(P30 / 1000, SignedK, "en-US") & "K"
+			            & " (PY " & FORMAT(P30PY / 1000, SignedK, "en-US") & "K)"
+			            & UNICHAR(10)
+			            & "Margin excl. 30%+: " & IF(ISBLANK(M), "n/a", FORMAT(M, Pct, "en-US"))
+			            & " (PY " & IF(ISBLANK(MPY), "n/a", FORMAT(MPY, Pct, "en-US")) & ")"
+			    )
+		displayFolder: Product Portfolio\Insight
+		lineageTag: 020e03d2-4ae5-4762-a77b-a45db52f90cf
+
+	measure 'Cust Sales' = SUM('mart customer_monthly'[sales])
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Customer Portfolio\Base
+		lineageTag: 53522fcc-dda7-4fc0-b642-efbfd0252a28
+
+	measure 'Cust Profit' = SUM('mart customer_monthly'[profit])
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Customer Portfolio\Base
+		lineageTag: 9baea0aa-6d7e-4199-b734-d5f9e34e53c7
+
+	measure 'Cust Customers' = DISTINCTCOUNT('mart customer_monthly'[customer_key])
+		formatString: #,0
+		displayFolder: Customer Portfolio\Base
+		lineageTag: 3101b654-0d18-45be-bc37-0992d90fda7b
+
+	measure 'Cust Profit per Customer' = DIVIDE([Cust Profit],[Cust Customers])
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Customer Portfolio\Base
+		lineageTag: 8bb0bad5-6429-4e2d-8bd0-c4bf566f6b4b
+
+	measure 'Cust Customers PY' =
+			VAR M=SELECTCOLUMNS(VALUES('dwh dim_date'[YearMonthSort]),"PriorMonth",'dwh dim_date'[YearMonthSort]-100)
+			RETURN IF(HASONEVALUE('dwh dim_date'[calendar_year]),CALCULATE([Cust Customers],REMOVEFILTERS('dwh dim_date'),TREATAS(M,'dwh dim_date'[YearMonthSort])))
+		formatString: #,0
+		displayFolder: Customer Portfolio\PY
+		lineageTag: 4f9b0e05-8d45-4441-8e01-0bc1033ac304
+
+	measure 'Cust Customers YoY %' = VAR C=[Cust Customers] VAR P=[Cust Customers PY] RETURN IF(NOT ISBLANK(C)&&NOT ISBLANK(P),DIVIDE(C-P,P))
+		formatString: +0.00%;-0.00%;0.00%
+		displayFolder: Customer Portfolio\PY
+		lineageTag: ca2dc4d4-9ae1-4108-8221-670f1f4e840d
+
+	measure 'Cust Customers YoY Label' = VAR Y=[Cust Customers YoY %] RETURN IF(ISBLANK(Y),"unavailable",FORMAT(Y,"+0.00%;-0.00%;0.00%"))
+		displayFolder: Customer Portfolio\PY
+		lineageTag: 70c4910d-2961-4746-b6da-fc4b53325f62
+
+	measure 'Cust Unprofitable Customers' = COALESCE(COUNTROWS(FILTER(VALUES('dwh dim_customer'[customer_key]),NOT ISBLANK([Cust Profit])&&[Cust Profit]<0)),0)
+		formatString: #,0
+		displayFolder: Customer Portfolio\Loss
+		lineageTag: e0ec5991-3a2f-4bcc-b213-2cb26c49f9a9
+
+	measure 'Cust Unprofitable Customers %' = DIVIDE([Cust Unprofitable Customers],[Cust Customers])
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Customer Portfolio\Loss
+		lineageTag: c6bf6656-2ddc-4680-bef7-574b5ddb3b20
+
+	measure 'Cust Net Loss in Unprofitable Customers' = IF(ISBLANK([Cust Sales]),BLANK(),COALESCE(SUMX(FILTER(VALUES('dwh dim_customer'[customer_key]),NOT ISBLANK([Cust Profit])&&[Cust Profit]<0),[Cust Profit]),0))
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Customer Portfolio\Loss
+		lineageTag: ace4115b-3261-4586-923a-d288d563ed4f
+
+	measure 'Cust Profit per Customer PY' =
+			VAR M=SELECTCOLUMNS(VALUES('dwh dim_date'[YearMonthSort]),"PriorMonth",'dwh dim_date'[YearMonthSort]-100)
+			RETURN IF(HASONEVALUE('dwh dim_date'[calendar_year]),CALCULATE([Cust Profit per Customer],REMOVEFILTERS('dwh dim_date'),TREATAS(M,'dwh dim_date'[YearMonthSort])))
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Customer Portfolio\PY
+		lineageTag: 3b479c40-c0e7-46b9-96e1-62efd3b9a28e
+
+	measure 'Cust Profit per Customer Δ PY' = VAR C=[Cust Profit per Customer] VAR P=[Cust Profit per Customer PY] RETURN IF(NOT ISBLANK(C)&&NOT ISBLANK(P),C-P)
+		formatString: +#,0.00;-#,0.00;0.00
+		displayFolder: Customer Portfolio\PY
+		lineageTag: bf0b476d-532f-4125-ae8a-b23a8ea1c6fd
+
+	measure 'Cust Profit per Customer Δ PY Label' = VAR D=[Cust Profit per Customer Δ PY] RETURN IF(ISBLANK(D),"unavailable",FORMAT(D,"+#,0.00;-#,0.00;0.00"))
+		displayFolder: Customer Portfolio\PY
+		lineageTag: 9444e8b5-5071-4327-b1f9-c05d7daf6538
+
+	measure 'Cust Sales 30%+' = SUM('mart customer_monthly'[sales_30plus])
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Customer Portfolio\Discount
+		lineageTag: 43032ca5-0f07-4af5-92fe-e4a6c5c08f07
+
+	measure 'Cust Profit 30%+' = SUM('mart customer_monthly'[profit_30plus])
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Customer Portfolio\Discount
+		lineageTag: 29ae9c17-5739-433a-848c-d7fcf630b9d7
+
+	measure 'Cust Insight New vs Returning' =
+			VAR Yr = SELECTEDVALUE('dwh dim_date'[calendar_year])
+			VAR HasHistory = NOT ISBLANK(CALCULATE([Cust Sales], REMOVEFILTERS('dwh dim_date'), 'dwh dim_date'[calendar_year] < Yr))
+			VAR T =
+			    ADDCOLUMNS(
+			        FILTER(VALUES('dwh dim_customer'[customer_key]), NOT ISBLANK([Cust Customers])),
+			        "__S", [Cust Sales],
+			        "__P", [Cust Profit],
+			        "__F", YEAR(CALCULATE(MIN('mart customer_monthly'[month_date]), REMOVEFILTERS('dwh dim_date'))))
+			VAR NewT = FILTER(T, [__F] = Yr)
+			VAR RetT = FILTER(T, [__F] < Yr)
+			VAR Pct = "0.0%"
+			RETURN
+			    SWITCH(TRUE(),
+			        ISBLANK([Cust Sales]), "No data for the selected period.",
+			        ISBLANK(Yr) || NOT HasHistory, "New vs returning split is unavailable.",
+			        "New customers: " & FORMAT(COUNTROWS(NewT) + 0, "#,0", "en-US")
+			            & " | Margin " & IF(COUNTROWS(NewT) > 0, FORMAT(DIVIDE(SUMX(NewT, [__P]), SUMX(NewT, [__S])), Pct, "en-US"), "n/a")
+			            & " | Unprofitable " & IF(COUNTROWS(NewT) > 0, FORMAT(DIVIDE(COUNTROWS(FILTER(NewT, [__P] < 0)) + 0, COUNTROWS(NewT)), Pct, "en-US"), "n/a")
+			            & UNICHAR(10)
+			            & "Returning: " & FORMAT(COUNTROWS(RetT) + 0, "#,0", "en-US")
+			            & " | Margin " & IF(COUNTROWS(RetT) > 0, FORMAT(DIVIDE(SUMX(RetT, [__P]), SUMX(RetT, [__S])), Pct, "en-US"), "n/a")
+			            & " | Unprofitable " & IF(COUNTROWS(RetT) > 0, FORMAT(DIVIDE(COUNTROWS(FILTER(RetT, [__P] < 0)) + 0, COUNTROWS(RetT)), Pct, "en-US"), "n/a"))
+		displayFolder: Customer Portfolio\Insight
+		lineageTag: 9855b00c-0b02-4ca2-b4da-f624a429d903
+
+	measure 'Cust Insight Retention' =
+			VAR M = SELECTCOLUMNS(VALUES('dwh dim_date'[YearMonthSort]), "PriorMonth", 'dwh dim_date'[YearMonthSort] - 100)
+			VAR T =
+			    FILTER(
+			        ADDCOLUMNS(
+			            VALUES('dwh dim_customer'[customer_key]),
+			            "__PPY", CALCULATE([Cust Profit], REMOVEFILTERS('dwh dim_date'), TREATAS(M, 'dwh dim_date'[YearMonthSort])),
+			            "__C", [Cust Customers],
+			            "__P", [Cust Profit]),
+			        NOT ISBLANK([__PPY]))
+			VAR PYN = COUNTROWS(T)
+			VAR Ret = COUNTROWS(FILTER(T, NOT ISBLANK([__C]))) + 0
+			VAR UPY = FILTER(T, [__PPY] < 0)
+			RETURN
+			    SWITCH(TRUE(),
+			        ISBLANK([Cust Sales]), "No data for the selected period.",
+			        NOT HASONEVALUE('dwh dim_date'[calendar_year]) || ISBLANK(PYN), "Prior-year comparison is unavailable.",
+			        "PY customers returned: " & FORMAT(Ret, "#,0", "en-US") & " of " & FORMAT(PYN, "#,0", "en-US")
+			            & " (" & FORMAT(DIVIDE(Ret, PYN), "0.0%", "en-US") & ")"
+			            & UNICHAR(10)
+			            & "PY unprofitable " & FORMAT(COUNTROWS(UPY) + 0, "#,0", "en-US")
+			            & ": again " & FORMAT(COUNTROWS(FILTER(UPY, NOT ISBLANK([__P]) && [__P] < 0)) + 0, "#,0", "en-US")
+			            & " | now profitable " & FORMAT(COUNTROWS(FILTER(UPY, [__P] > 0)) + 0, "#,0", "en-US")
+			            & " | not returned " & FORMAT(COUNTROWS(FILTER(UPY, ISBLANK([__C]))) + 0, "#,0", "en-US"))
+		displayFolder: Customer Portfolio\Insight
+		lineageTag: cbd3a138-9271-4b95-a99f-110e4366f2a4
+
+	measure 'Cust Insight Discount Loss' =
+			VAR T =
+			    ADDCOLUMNS(
+			        FILTER(VALUES('dwh dim_customer'[customer_key]), NOT ISBLANK([Cust Profit])),
+			        "__P", [Cust Profit], "__P30", [Cust Profit 30%+], "__S30", [Cust Sales 30%+])
+			VAR U = FILTER(T, [__P] < 0)
+			VAR LossTotal = SUMX(U, [__P]) + 0
+			VAR Loss30 = SUMX(U, [__P30]) + 0
+			VAR SignedK = "+#,0.0;-#,0.0;0.0"
+			RETURN
+			    SWITCH(TRUE(),
+			        ISBLANK([Cust Sales]), "No data for the selected period.",
+			        COUNTROWS(U) + 0 = 0, "No unprofitable customers in the selected period.",
+			        "Unprofitable customers: 30%+ lines " & FORMAT(Loss30 / 1000, SignedK, "en-US") & "K"
+			            & " (" & FORMAT(DIVIDE(Loss30, LossTotal), "0.0%", "en-US") & " of loss)"
+			            & " | other lines " & FORMAT((LossTotal - Loss30) / 1000, SignedK, "en-US") & "K"
+			            & UNICHAR(10)
+			            & "Unprofitable with 30%+ lines: " & FORMAT(COUNTROWS(FILTER(U, [__S30] > 0)) + 0, "#,0", "en-US")
+			            & " | 30%+ in profitable customers: "
+			            & FORMAT((SUMX(FILTER(T, [__P] > 0), [__P30]) + 0) / 1000, SignedK, "en-US") & "K")
+		displayFolder: Customer Portfolio\Insight
+		lineageTag: 95d548b8-e81b-4d6a-873a-0915bdbacda9
+
+	measure 'Cust Band Customers' =
+			VAR Bands = 'Customer Size Band'
+			VAR InBand =
+			    FILTER (
+			        ADDCOLUMNS ( VALUES ( 'dwh dim_customer'[customer_key] ), "@Sales", [Cust Sales] ),
+			        VAR S = [@Sales]
+			        RETURN
+			            NOT ISBLANK ( S )
+			                && NOT ISEMPTY (
+			                    FILTER ( Bands,
+			                        S >= 'Customer Size Band'[Min Sales]
+			                            && ( ISBLANK ( 'Customer Size Band'[Max Sales] ) || S < 'Customer Size Band'[Max Sales] ) ) )
+			    )
+			RETURN IF ( ISBLANK ( [Cust Sales] ), BLANK (), COUNTROWS ( InBand ) + 0 )
+		formatString: #,0
+		displayFolder: Customer Portfolio\Size Band
+		lineageTag: 686d7ca3-e4bd-4c1f-ba46-0eae712bceb2
+
+	measure 'Cust Band Sales' =
+			VAR Bands = 'Customer Size Band'
+			VAR InBand =
+			    FILTER (
+			        ADDCOLUMNS ( VALUES ( 'dwh dim_customer'[customer_key] ), "@Sales", [Cust Sales] ),
+			        VAR S = [@Sales]
+			        RETURN
+			            NOT ISBLANK ( S )
+			                && NOT ISEMPTY (
+			                    FILTER ( Bands,
+			                        S >= 'Customer Size Band'[Min Sales]
+			                            && ( ISBLANK ( 'Customer Size Band'[Max Sales] ) || S < 'Customer Size Band'[Max Sales] ) ) )
+			    )
+			RETURN IF ( ISBLANK ( [Cust Sales] ), BLANK (), SUMX ( InBand, [@Sales] ) + 0 )
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Customer Portfolio\Size Band
+		lineageTag: b1c0c200-3555-4b0d-b329-3ad289d37e14
+
+	measure 'Cust Band Profit' =
+			VAR Bands = 'Customer Size Band'
+			VAR InBand =
+			    FILTER (
+			        ADDCOLUMNS ( VALUES ( 'dwh dim_customer'[customer_key] ), "@Sales", [Cust Sales], "@Profit", [Cust Profit] ),
+			        VAR S = [@Sales]
+			        RETURN
+			            NOT ISBLANK ( S )
+			                && NOT ISEMPTY (
+			                    FILTER ( Bands,
+			                        S >= 'Customer Size Band'[Min Sales]
+			                            && ( ISBLANK ( 'Customer Size Band'[Max Sales] ) || S < 'Customer Size Band'[Max Sales] ) ) )
+			    )
+			RETURN IF ( ISBLANK ( [Cust Sales] ), BLANK (), SUMX ( InBand, [@Profit] ) + 0 )
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Customer Portfolio\Size Band
+		lineageTag: 287cdcd9-b7c8-42ad-b947-c9eeddb71635
+
+	measure 'Cust Band Profit Margin' = DIVIDE ( [Cust Band Profit], [Cust Band Sales] )
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Customer Portfolio\Size Band
+		lineageTag: 5f01cefc-d8e9-4ec4-a474-fcb42efed3ad
+
+	measure 'Cust Band Unprofitable Customers %' =
+			VAR Bands = 'Customer Size Band'
+			VAR InBand =
+			    FILTER (
+			        ADDCOLUMNS ( VALUES ( 'dwh dim_customer'[customer_key] ), "@Sales", [Cust Sales], "@Profit", [Cust Profit] ),
+			        VAR S = [@Sales]
+			        RETURN
+			            NOT ISBLANK ( S )
+			                && NOT ISEMPTY (
+			                    FILTER ( Bands,
+			                        S >= 'Customer Size Band'[Min Sales]
+			                            && ( ISBLANK ( 'Customer Size Band'[Max Sales] ) || S < 'Customer Size Band'[Max Sales] ) ) )
+			    )
+			RETURN DIVIDE ( COUNTROWS ( FILTER ( InBand, [@Profit] < 0 ) ), COUNTROWS ( InBand ) )
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Customer Portfolio\Size Band
+		lineageTag: 898fb6d4-2446-4fb4-8f69-71726cd96a67
+
+	measure 'Cust Band Customers Share %' = DIVIDE ( [Cust Band Customers], CALCULATE ( [Cust Band Customers], REMOVEFILTERS ( 'Customer Size Band' ) ) )
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Customer Portfolio\Size Band
+		lineageTag: 21808303-8f90-40e3-aaf0-a289ca56a7fd
+
+	measure 'Cust Band Profit Share %' = DIVIDE ( [Cust Band Profit], CALCULATE ( [Cust Band Profit], REMOVEFILTERS ( 'Customer Size Band' ) ) )
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Customer Portfolio\Size Band
+		lineageTag: 415c38e3-4531-4aca-86bd-bb674af25b8e
+
+	measure 'Cust Cohort Profitable Profit' =
+			
+			VAR SelDates =
+			    CALCULATETABLE ( VALUES ( 'dwh dim_date'[calendar_date] ), ALLSELECTED ( 'dwh dim_date' ) )
+			VAR Cohort =
+			    CALCULATETABLE (
+			        FILTER ( VALUES ( 'dwh dim_customer'[customer_key] ), [Cust Profit] > 0 ),
+			        REMOVEFILTERS ( 'dwh dim_date' ),
+			        SelDates
+			    )
+			VAR Result =
+			    CALCULATE ( [Cust Profit], KEEPFILTERS ( Cohort ) )
+			RETURN
+			    IF ( NOT ISBLANK ( [Cust Sales] ), COALESCE ( Result, 0 ) )
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Customer Portfolio\Cohort
+		lineageTag: ca086d2c-3cd5-403f-a8f5-ada5c13f3858
+
+	measure 'Cust Cohort Unprofitable Profit' =
+			
+			VAR SelDates =
+			    CALCULATETABLE ( VALUES ( 'dwh dim_date'[calendar_date] ), ALLSELECTED ( 'dwh dim_date' ) )
+			VAR Cohort =
+			    CALCULATETABLE (
+			        FILTER ( VALUES ( 'dwh dim_customer'[customer_key] ), [Cust Profit] < 0 ),
+			        REMOVEFILTERS ( 'dwh dim_date' ),
+			        SelDates
+			    )
+			VAR Result =
+			    CALCULATE ( [Cust Profit], KEEPFILTERS ( Cohort ) )
+			RETURN
+			    IF ( NOT ISBLANK ( [Cust Sales] ), COALESCE ( Result, 0 ) )
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Customer Portfolio\Cohort
+		lineageTag: cf383f69-5330-4c85-9721-0334ff0488f8
+
+	measure 'Cust Type Customers' = ```
+			
+			    VAR Yr = SELECTEDVALUE ( 'dwh dim_date'[calendar_year] )
+			    VAR Types = VALUES ( 'Customer Type'[Type Sort] )
+			    VAR Cur = VALUES ( 'mart customer_monthly'[customer_key] )
+			    VAR Prior = CALCULATETABLE ( VALUES ( 'mart customer_monthly'[customer_key] ), REMOVEFILTERS ( 'dwh dim_date' ), 'dwh dim_date'[calendar_year] < Yr )
+			    VAR Sel = UNION ( FILTER ( EXCEPT ( Cur, Prior ), 1 IN Types ), FILTER ( INTERSECT ( Cur, Prior ), 2 IN Types ) )
+			    RETURN
+			        SWITCH ( TRUE (),
+			            ISBLANK ( [Cust Sales] ), BLANK (),
+			            NOT ISFILTERED ( 'Customer Type' ), [Cust Customers],
+			            ISBLANK ( Yr ) || ISEMPTY ( Prior ), BLANK (),
+			            COUNTROWS ( Sel ) + 0 )
+			```
+		formatString: #,0
+		displayFolder: Customer Portfolio\Segment Type
+		lineageTag: 2a6bdd6e-9b0c-460f-b8dd-8a4185bdf0f6
+
+	measure 'Cust Type Sales' = ```
+			
+			    VAR Yr = SELECTEDVALUE ( 'dwh dim_date'[calendar_year] )
+			    VAR Types = VALUES ( 'Customer Type'[Type Sort] )
+			    VAR Cur = VALUES ( 'mart customer_monthly'[customer_key] )
+			    VAR Prior = CALCULATETABLE ( VALUES ( 'mart customer_monthly'[customer_key] ), REMOVEFILTERS ( 'dwh dim_date' ), 'dwh dim_date'[calendar_year] < Yr )
+			    VAR Sel = UNION ( FILTER ( EXCEPT ( Cur, Prior ), 1 IN Types ), FILTER ( INTERSECT ( Cur, Prior ), 2 IN Types ) )
+			    RETURN
+			        SWITCH ( TRUE (),
+			            ISBLANK ( [Cust Sales] ), BLANK (),
+			            NOT ISFILTERED ( 'Customer Type' ), [Cust Sales],
+			            ISBLANK ( Yr ) || ISEMPTY ( Prior ), BLANK (),
+			            CALCULATE ( [Cust Sales], KEEPFILTERS ( Sel ) ) + 0 )
+			```
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Customer Portfolio\Segment Type
+		lineageTag: 931fede4-66c7-4df6-9f23-7f6a480ce114
+
+	measure 'Cust Type Profit' = ```
+			
+			    VAR Yr = SELECTEDVALUE ( 'dwh dim_date'[calendar_year] )
+			    VAR Types = VALUES ( 'Customer Type'[Type Sort] )
+			    VAR Cur = VALUES ( 'mart customer_monthly'[customer_key] )
+			    VAR Prior = CALCULATETABLE ( VALUES ( 'mart customer_monthly'[customer_key] ), REMOVEFILTERS ( 'dwh dim_date' ), 'dwh dim_date'[calendar_year] < Yr )
+			    VAR Sel = UNION ( FILTER ( EXCEPT ( Cur, Prior ), 1 IN Types ), FILTER ( INTERSECT ( Cur, Prior ), 2 IN Types ) )
+			    RETURN
+			        SWITCH ( TRUE (),
+			            ISBLANK ( [Cust Sales] ), BLANK (),
+			            NOT ISFILTERED ( 'Customer Type' ), [Cust Profit],
+			            ISBLANK ( Yr ) || ISEMPTY ( Prior ), BLANK (),
+			            CALCULATE ( [Cust Profit], KEEPFILTERS ( Sel ) ) + 0 )
+			```
+		formatString: #,0.00;-#,0.00;0.00
+		displayFolder: Customer Portfolio\Segment Type
+		lineageTag: 51b40421-5ebd-4f86-8a0e-2b7b7deb4306
+
+	measure 'Cust Type Unprofitable Customers %' = ```
+			
+			    VAR Yr = SELECTEDVALUE ( 'dwh dim_date'[calendar_year] )
+			    VAR Types = VALUES ( 'Customer Type'[Type Sort] )
+			    VAR Cur = VALUES ( 'mart customer_monthly'[customer_key] )
+			    VAR Prior = CALCULATETABLE ( VALUES ( 'mart customer_monthly'[customer_key] ), REMOVEFILTERS ( 'dwh dim_date' ), 'dwh dim_date'[calendar_year] < Yr )
+			    VAR Sel = UNION ( FILTER ( EXCEPT ( Cur, Prior ), 1 IN Types ), FILTER ( INTERSECT ( Cur, Prior ), 2 IN Types ) )
+			    RETURN
+			        SWITCH ( TRUE (),
+			            ISBLANK ( [Cust Sales] ), BLANK (),
+			            NOT ISFILTERED ( 'Customer Type' ), [Cust Unprofitable Customers %],
+			            ISBLANK ( Yr ) || ISEMPTY ( Prior ), BLANK (),
+			            DIVIDE ( COUNTROWS ( FILTER ( Sel, [Cust Profit] < 0 ) ) + 0, COUNTROWS ( Sel ) ) )
+			```
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Customer Portfolio\Segment Type
+		lineageTag: 02c34ce9-bfc6-4359-a9c7-58fc20ae0e84
+
+	measure 'Cust Type Profit Margin' = DIVIDE ( [Cust Type Profit], [Cust Type Sales] )
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Customer Portfolio\Segment Type
+		lineageTag: 53206e90-a9f1-46b8-8ba3-432efaa0d22a
+
+	measure 'Cust Type Profit Margin PY' = ```
+			
+			    VAR M = SELECTCOLUMNS ( VALUES ( 'dwh dim_date'[YearMonthSort] ), "PriorMonth", 'dwh dim_date'[YearMonthSort] - 100 )
+			    RETURN IF ( HASONEVALUE ( 'dwh dim_date'[calendar_year] ), CALCULATE ( [Cust Type Profit Margin], REMOVEFILTERS ( 'dwh dim_date' ), TREATAS ( M, 'dwh dim_date'[YearMonthSort] ) ) )
+			```
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Customer Portfolio\Segment Type
+		lineageTag: 11d0c25e-aba0-4ac5-babc-6d29242db079
+
+	measure 'Cust Type Profit Margin Δ PY pp' = ```
+			
+			    VAR C = [Cust Type Profit Margin] VAR P = [Cust Type Profit Margin PY]
+			    RETURN IF ( NOT ISBLANK ( C ) && NOT ISBLANK ( P ), ( C - P ) * 100 )
+			```
+		formatString: +0.00;-0.00;0.00
+		displayFolder: Customer Portfolio\Segment Type
+		lineageTag: ce814cdd-4017-475b-9249-51bbcb8c9633
+
+	measure 'Line Break-Even Sales' = CALCULATE([Line Sales], KEEPFILTERS('mart sales_line_profitability_monthly'[line_profitability_status] = "BREAK_EVEN"))
+		formatString: #,0.00
+		lineageTag: f75dabb4-57e2-4e0d-b100-322d88bc5680
+
+	column _placeholder
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 0cd64141-935c-46db-ab1c-31975b1fcbc3
+		summarizeBy: sum
+		sourceColumn: _placeholder
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Measures (2)' = m
+		mode: import
+		source =
+				let
+				    Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i45WMlSKjQUA", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [_placeholder = _t]),
+				    #"Changed Type" = Table.TransformColumnTypes(Source,{{"_placeholder", Int64.Type}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_ResultType = Table
+

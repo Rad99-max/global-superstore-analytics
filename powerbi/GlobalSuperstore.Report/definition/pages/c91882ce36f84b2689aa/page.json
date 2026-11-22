@@ -1,0 +1,78 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "c91882ce36f84b2689aa",
+  "displayName": "Tooltip - Sales & Profit",
+  "displayOption": "ActualSize",
+  "height": 100,
+  "width": 225,
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "a8bb8283692e908dcd7f",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "mart executive_monthly"
+              }
+            },
+            "Property": "YearMonth"
+          }
+        },
+        "type": "Categorical",
+        "howCreated": "Drillthrough"
+      }
+    ]
+  },
+  "pageBinding": {
+    "name": "SalesProfitMonthTooltip",
+    "type": "Tooltip",
+    "parameters": [
+      {
+        "name": "YearMonth"
+      },
+      {
+        "name": "a96b53575e0cf620dd58",
+        "boundFilter": "a8bb8283692e908dcd7f",
+        "fieldExpr": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "mart executive_monthly"
+              }
+            },
+            "Property": "YearMonth"
+          }
+        }
+      }
+    ]
+  },
+  "objects": {
+    "background": [
+      {
+        "properties": {
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#FFFFFF'"
+                  }
+                }
+              }
+            }
+          },
+          "transparency": {
+            "expr": {
+              "Literal": {
+                "Value": "0D"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "visibility": "HiddenInViewMode",
+  "type": "Tooltip"
+}

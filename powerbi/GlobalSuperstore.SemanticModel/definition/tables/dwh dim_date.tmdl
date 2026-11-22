@@ -1,0 +1,132 @@
+table 'dwh dim_date'
+	lineageTag: 8b036a64-c1ca-40f3-9057-38006ccf496b
+	dataCategory: Time
+
+	column date_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 844cfb93-e101-4f1c-a19c-c505f8a0fcf5
+		summarizeBy: none
+		sourceColumn: date_key
+
+		annotation SummarizationSetBy = User
+
+	column calendar_date
+		dataType: dateTime
+		isKey
+		formatString: Long Date
+		lineageTag: 18a5d813-a465-416f-a9cf-97245c8acdfa
+		summarizeBy: none
+		sourceColumn: calendar_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column calendar_year
+		dataType: int64
+		formatString: 0
+		lineageTag: 8a427efa-a8c7-4388-a242-1d9345f72da8
+		summarizeBy: none
+		sourceColumn: calendar_year
+
+		annotation SummarizationSetBy = User
+
+	column calendar_quarter
+		dataType: int64
+		formatString: 0
+		lineageTag: ad704713-1573-434e-ae9d-43f90119ec73
+		summarizeBy: none
+		sourceColumn: calendar_quarter
+
+		annotation SummarizationSetBy = User
+
+	column calendar_month
+		dataType: int64
+		formatString: 0
+		lineageTag: 4746cc06-fa5d-4e22-95c3-68a3ec0858a3
+		summarizeBy: none
+		sourceColumn: calendar_month
+
+		annotation SummarizationSetBy = User
+
+	column day_of_month
+		dataType: int64
+		formatString: 0
+		lineageTag: e6353851-08fb-441a-b439-2198a33f9e90
+		summarizeBy: none
+		sourceColumn: day_of_month
+
+		annotation SummarizationSetBy = User
+
+	column iso_day_of_week
+		dataType: int64
+		formatString: 0
+		lineageTag: 8706be66-0ee9-4e61-b528-da27007de4dc
+		summarizeBy: none
+		sourceColumn: iso_day_of_week
+
+		annotation SummarizationSetBy = User
+
+	column iso_week
+		dataType: int64
+		formatString: 0
+		lineageTag: cf11dc96-30c6-4105-af79-acaa6626238b
+		summarizeBy: none
+		sourceColumn: iso_week
+
+		annotation SummarizationSetBy = User
+
+	column iso_year
+		dataType: int64
+		formatString: 0
+		lineageTag: c4714e67-8037-45a4-8d51-1eb3143c4059
+		summarizeBy: none
+		sourceColumn: iso_year
+
+		annotation SummarizationSetBy = User
+
+	column _dwh_loaded_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: abebc65e-1a3c-43ff-b2e3-11dc21c4b73b
+		summarizeBy: none
+		sourceColumn: _dwh_loaded_at
+
+		annotation SummarizationSetBy = Automatic
+
+	column YearMonth =
+			FORMAT(
+			    'dwh dim_date'[calendar_date],
+			    "MMM yyyy",
+			    "en-US"
+			)
+		dataType: string
+		lineageTag: 477eb7a9-908a-45e8-9d68-bdaf5c1fd75d
+		summarizeBy: none
+		sortByColumn: YearMonthSort
+
+	column YearMonthSort =
+			'dwh dim_date'[calendar_year] * 100
+			    + 'dwh dim_date'[calendar_month]
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: bec16cc0-8865-40c4-8305-e6b782a4d151
+		summarizeBy: none
+
+	partition 'dwh dim_date' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5432", "sales_dwh"),
+				    dwh_dim_date = Source{[Schema="dwh",Item="dim_date"]}[Data],
+				    #"Filtered Rows" = Table.SelectRows(dwh_dim_date, each [calendar_date] >= #date(2012, 1, 1) and [calendar_date] <= #date(2015, 12, 31)),
+				    #"Filtered Rows1" = Table.SelectRows(#"Filtered Rows", each [calendar_date] >= #date(2012, 1, 1) and [calendar_date] <= #date(2015, 12, 31))
+				in
+				    #"Filtered Rows1"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

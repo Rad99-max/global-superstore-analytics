@@ -1,0 +1,252 @@
+GLOBAL SUPERSTORE — MART GEOGRAPHIC ANALYSIS: ДИЗАЙН
+
+1. НАЗНАЧЕНИЕ И GRAIN
+
+Бизнес-вопрос: «Где географически компания зарабатывает, а где теряет прибыль?»
+Предлагаемое название таблицы: mart.geographic_monthly.
+Утверждённый grain: одна строка = календарный месяц Order Date + Geography Key.
+Географическая иерархия представления: Market -> Region -> Country.
+Текущий источник: SUCCESS load_id f44edd71-d712-4fa0-81d3-98ad24e00599.
+Read-only проверка sales_dwh выполнена 2026-10-18.
+Ожидается 3 841 фактическая комбинация за 48 месяцев, 2012-01-01..2015-12-01.
+
+2. ПОЛЯ, ТИПЫ, КЛЮЧИ
+
+поле | PostgreSQL тип | обязательность | назначение
+month_date | DATE | NOT NULL | первое число месяца Order Date
+geography_key | BIGINT | NOT NULL | ссылка на dwh.dim_geography
+sales | NUMERIC без (p,s) | NOT NULL | сумма total_sales заказов
+profit | NUMERIC без (p,s) | NOT NULL | сумма total_profit заказов
+loss_making_sales | NUMERIC без (p,s) | NOT NULL | сумма total_sales только убыточных заказов
+orders | BIGINT | NOT NULL | количество заказов
+unprofitable_orders | BIGINT | NOT NULL | количество убыточных заказов
+
+PRIMARY KEY: (month_date, geography_key).
+FOREIGN KEY: geography_key -> dwh.dim_geography(geography_key), без ON DELETE CASCADE.
+Оправданы CHECK первого числа месяца, orders >= 0,
+0 <= unprofitable_orders <= orders. Не запрещать отрицательный Profit.
+Не вводить ограничение loss_making_sales <= sales только на основании текущих данных:
+допустимость отрицательных Sales в будущем не является утверждённым бизнес-правилом.
+PK обслуживает месячные выборки; отдельный индекс geography_key оправдан как FK-индекс
+и для региональных/страновых фильтров. Другие индексы для этого объёма не нужны.
+Surrogate key MART не нужен. Market/Region/Country не дублировать в MART.
+Не добавлять технические поля или иные бизнес-поля к семиколоночному контракту.
+Year/Quarter/Month поступают из DimDate. Profit Margin и Unprofitable Order Rate
+в PostgreSQL не хранить: они вычисляются из сумм в DAX.
+
+3. ИСТОЧНИКИ И ПРАВИЛА РАСЧЁТА
+
+Все меры, счётчики и geography_key брать из dwh.fact_order.
+Order = (order_id, customer_id), техническая идентификация через order_key.
+Orders = COUNT строк заказов, не COUNT(DISTINCT order_id).
+fact_order.order_date_key -> dim_date.date_key -> calendar_date -> month_date.
+fact_order.geography_key -> dim_geography.geography_key -> Market/Region/Country.
+fact_order_line использовать исключительно для контрольной сверки до публикации;
+не включать его в соединение, из которого рассчитываются меры MART.
+
+Sales = SUM(total_sales); Profit = SUM(total_profit).
+Loss-Making Sales = SUM(total_sales) только при total_profit < 0.
+Orders = COUNT(*); Unprofitable Orders = COUNT(*) при total_profit < 0.
+Для комбинации без убыточных заказов loss_making_sales = 0,
+unprofitable_orders = 0; сама комбинация существует благодаря другим заказам.
+NULL total_sales/total_profit — ошибка источника: остановить публикацию,
+а не заменять эти значения нулями. Не округлять деньги, не использовать float.
+Не учитывать Returns, People, Ship Date или Discount в расчёте мер.
+
+4. ГЕОГРАФИЯ И ОТСУТСТВИЕ FAN-OUT
+
+Проверено: 25 739 из 25 739 заказов имеют ровно один geography_key;
+заказов с несколькими geography_key = 0, максимум внутри заказа = 1.
+Нет заказов без строк; все 51 290 строк согласованы с географией своего заказа.
+Внутри каждого заказа также ровно один Market, один Region и один Country.
+Расхождения geography_key, Order Date и load_id между строками и заказом = 0.
+Суммы Sales/Profit строк сверены с каждым заказом: расхождений = 0.
+Ссылки заказов на dim_geography и dim_date разрешены, NULL денежных мер = 0.
+
+dim_geography: 168 уникальных geography_key и 168 уникальных комбинаций
+(Market, Region, Country); 5 Market, 23 Region, 165 Country; NULL атрибутов = 0.
+Каждый Region относится к одному Market.
+United States имеет четыре географические комбинации с Region:
+Central US, Eastern US, Southern US, Western US.
+Country не определяет единственный Region. Иерархия пригодна для навигации,
+но Country — не уникальный ключ её конечных географических комбинаций.
+
+Соединять заказ с geography только по geography_key; не по названию Country/Region.
+Глобальный Country показатель суммирует все geography_key этой страны.
+Фильтр Region ограничивает набор geography_key и вклад страны выбранными комбинациями.
+При глобальном country ranking United States — одна страна, а не четыре строки.
+Группировка по Market/Region/Country в dimension фильтрует факты без размножения строк.
+Нельзя присоединять order lines к order totals перед суммированием/подсчётом заказов.
+Если будущие данные нарушат единственность географии заказа — остановить публикацию;
+не выбирать MIN/MAX geography и не распределять заказ автоматически.
+
+5. АДДИТИВНОСТЬ И ПРОИЗВОДНЫЕ KPI
+
+Все пять базовых мер аддитивны по Month, Geography и их укрупнениям:
+sales, profit, loss_making_sales, orders, unprofitable_orders.
+Каждый заказ относится к одному месяцу Order Date и одной географии, поэтому счётчики
+без двойного счёта суммируются Month -> Quarter -> Year и Market -> Region -> Country.
+Суммировать только непересекающиеся наборы строк одного снимка; не складывать итоги
+уровней иерархии с их дочерними строками как отдельные факты.
+
+Profit Margin = DIVIDE(SUM(profit), SUM(sales)).
+Unprofitable Order Rate = DIVIDE(SUM(unprofitable_orders), SUM(orders)).
+Нулевой знаменатель -> BLANK, не бесконечность и не автоматический ноль.
+Не усреднять месячные/страновые Margin или Rate: на итогах заново делить суммы.
+Loss-Making Sales классифицируется по полной прибыли заказа, не по Profit строки,
+месяца, Region или Country. Прибыльная страна может иметь Loss-Making Sales.
+Break-even total_profit = 0 входит в orders и sales, но не в unprofitable_orders
+и не в loss_making_sales; не применять epsilon или округление для классификации.
+
+6. ПОКРЫТИЕ И ОТСУТСТВУЮЩИЕ КОМБИНАЦИИ
+
+Хранить только фактические Month + Geography, в том числе комбинации с нулевыми
+агрегированными денежными суммами. Не фильтровать через HAVING SUM(...) <> 0.
+Полная Month x Geography сетка не нужна: 48 x 168 = 8 064 строки вместо 3 841.
+Не создавать искусственные публикации для географий без заказов в месяце.
+Полную временную ось обеспечивать DimDate; при необходимости Show items with no data.
+Внутри подтверждённого покрытия отсутствие комбинации означает отсутствие заказов;
+аддитивные суммы/счётчики можно отображать как 0 в Power BI. Margin и Rate при
+нулевых знаменателях остаются BLANK. За пределами покрытия нули не выдумывать.
+Не маскировать отсутствующий/неполный снимок заполнением комбинаций нулями.
+В текущем DWH все 48 месяцев имеют заказы; максимальная дата будущего источника
+сама по себе не доказывает полноту поставки или последнего месяца.
+
+7. POWER BI RELATIONSHIPS
+
+DimDate[calendar_date] (1) -> GeographicMonthly[month_date] (*).
+DimGeography[geography_key] (1) -> GeographicMonthly[geography_key] (*).
+Обе связи активные, фильтрация однонаправленная от dimension к MART.
+Уникальность и отсутствие NULL на стороне dimensions обязательны.
+Не создавать many-to-many, связи по Country, двунаправленные связи или прямые связи
+между MART. Общий календарь может отдельно фильтровать каждый MART, но нельзя
+складывать повторяющиеся бизнес-показатели разных MART как разные продажи.
+Фильтр Geography этой страницы действует на Geographic MART; он не делает глобальные
+Executive/Sales Profitability MART географически детализированными.
+
+В DimGeography создать иерархию Market -> Region -> Country.
+Для глобального рейтинга использовать Country отдельно, с агрегацией всех его ключей.
+Year/Quarter/YearMonth slicers и оси брать из DimDate; YearMonth сортировать по времени.
+month_date и calendar_date имеют тип Date; связь идёт по первому дню месяца,
+не по повторяющемуся MonthStart календаря и не по surrogate integer date_key.
+Для текущих месячных страниц использовать полный ежедневный календарь
+2012-01-01..2015-12-31 (1 461 день), Mark as date table, без Auto date/time.
+Начало 2016 в DWH связано с Ship Date и не расширяет покрытие этого MART.
+Дневной/недельный drill-down и MTD не поддерживаются месячным grain.
+
+8. KPI И ВИЗУАЛИЗАЦИИ
+
+Sales / Profit / Loss-Making Sales — суммы соответствующих полей.
+Profit Margin / Unprofitable Order Rate — отношения сумм из раздела 5.
+Все пять утверждённых KPI полностью поддерживаются семью полями MART.
+
+Profit by Region: сумма Profit, Region из DimGeography.
+Top 10 Loss-Making Countries: динамический рейтинг из раздела 9.
+Profit Margin by Region: SUM(profit)/SUM(sales) для каждого Region.
+Profit Trend for Selected Region: месячная ось DimDate и фильтр выбранного Region.
+Business Insights: вклад Market/Region/Country в Profit, отрицательные результаты,
+Margin, Loss-Making Sales и доля убыточных заказов; географические сравнения и динамика.
+Не хранить готовый текст Insights, рейтинг или процентные показатели в MART.
+При будущих PY/YoY использовать календарь и полное сопоставимое покрытие;
+2012 не имеет PY. Изменение Margin/Rate в п.п. считать как разность долей x 100.
+Не вводить произвольные пороги риска или причинные объяснения без исследования.
+
+9. TOP 10 LOSS-MAKING COUNTRIES
+
+10 стран с наименьшим итоговым Profit в выбранном периоде,
+только среди стран с SUM(Profit) < 0.
+Это рейтинг по итоговому финансовому результату, не по Loss-Making Sales,
+не по количеству убыточных заказов и не по отрицательным товарным строкам.
+Сначала применить выбранный период и фильтры Market/Region/Country;
+затем агрегировать Profit по Country, отобрать отрицательные результаты,
+отсортировать Profit по возрастанию и взять максимум 10 стран.
+При вычислении кандидатов убрать только текущий Country строки визуализации,
+сохранив внешние фильтры пользователя. Рейтинг пересчитывать в DAX, не фиксировать в БД.
+При равном Profit использовать Country по возрастанию как второй ключ сортировки,
+чтобы получить ровно 10 при достаточном числе кандидатов; обычный TOPN только по Profit
+может вернуть больше 10 из-за совпадений. Итоговый visual сортировать явно.
+Если отрицательных стран меньше 10, показывать их фактическое количество;
+если нет — пустой рейтинг с пояснением, не добавлять прибыльные страны.
+United States агрегируется по всем доступным geography_key; выбранный Region
+сужает его вклад. Не ранжировать отдельно одинаковые названия Country по каждому ключу.
+
+Проверка полного периода: 31 страна с отрицательным итоговым Profit.
+Первые 10 (Profit округлён здесь только для удобства чтения):
+Turkey -98 447.23; Nigeria -80 750.72; Netherlands -41 070.07;
+Honduras -29 482.37; Pakistan -22 446.65; Argentina -18 693.80;
+Panama -17 723.45; Sweden -17 519.37; Philippines -16 128.22;
+South Korea -12 792.83. Реальный рейтинг строить по неокруглённому NUMERIC.
+
+10. КОНТРОЛЬНЫЕ ИТОГИ
+
+Источник: 25 739 заказов, 51 290 строк для контрольной сверки.
+MART: 3 841 фактическая комбинация, 48 месяцев, 2012-01-01..2015-12-01.
+Sales = 12642501.90988000002174815.
+Profit = 1467457.2912799999311949806.
+Loss-Making Sales = 2372832.6364000000007972.
+Orders = 25739.
+Unprofitable Orders = 6309.
+Break-even orders = 163 (контроль, отдельная колонка не нужна).
+Ключи географии: 168; Market: 5; Region: 23; Country: 165.
+Эти количества относятся к текущему снимку, не являются вечными ограничениями размера.
+
+11. ЗАГРУЗКА И КРИТЕРИИ ПРИЁМКИ
+
+Будущая загрузка — полная пересборка маленькой публикации в одной транзакции,
+с согласованным снимком чтения и фиксированным SUCCESS load_id.
+При любой ошибке — ROLLBACK с сохранением предыдущей публикации.
+Не менять DWH/RAW/STAGING. Повторный запуск должен давать те же ключи и все значения.
+
+До публикации:
+1) Проверить sales_dwh, SUCCESS raw.load_log и один согласованный load_id фактов.
+2) Проверить ожидаемое количество заказов и полноту покрытия, не смешивать снимки.
+3) Все заказы разрешаются в одну dim_geography и одну Order Date, ссылки без orphan.
+4) Все строки заказа имеют один geography_key, совпадающий с fact_order;
+   проверены Market/Region/Country, Order Date и происхождение строк.
+5) NULL денежных мер/ключей/атрибутов географии нет; суммы строк сверены с каждым заказом.
+6) Соединения заказа с dimensions сохраняют COUNT(*) и COUNT(DISTINCT order_key).
+
+До COMMIT:
+7) PK уникален, все семь полей не NULL, даты — первые числа, счётчики допустимы.
+8) Ровно 3 841 фактическая комбинация, 48 месяцев и утверждённый диапазон.
+9) Независимая сверка всех пяти мер по каждому Month + Geography, месяцам,
+   Market, Region, Country, кварталам/годам и общему итогу с fact_order.
+10) Итоговые Sales/Profit дополнительно сверены с fact_order_line без использования
+    order totals в соединении с линиями. Нет потерь или fan-out.
+11) Loss-Making Sales/Unprofitable Orders проверены по total_profit < 0;
+    Break-even и группы без убыточных заказов обработаны корректно.
+
+После будущей реализации:
+12) Второй полный запуск даёт идентичную публикацию, исходные слои не изменены.
+13) Проверены Year/Quarter/Month и Market/Region/Country фильтры, в том числе
+    глобальный United States и его отдельные Region; Margin/Rate итогов взвешены.
+14) Top 10 проверен для полного периода, выбранного периода/Region, ничьих,
+    менее 10 отрицательных стран и отсутствия отрицательных результатов.
+15) Для Power BI проверены mapping NUMERIC, младшие разряды и форматирование:
+    Decimal Number приблизителен; Fixed Decimal ограничивает шкалу четырьмя.
+    Не округлять PostgreSQL ради формата; MART/DWH остаются точным контролем.
+
+12. ОГРАНИЧЕНИЯ И РЕКОМЕНДАЦИЯ
+
+Данные показывают географический финансовый результат, но не доказывают причины.
+Loss-Making Sales — продажи убыточных заказов, а не сумма убытков и не возвраты.
+Country не является уникальным ключом географии; United States нельзя искусственно
+закрепить за одним Region. Не исправлять географические значения автоматически.
+Валюта источника не установлена; знак конкретной валюты не назначать.
+People/Returns/Product/Discount детализация в этом MART отсутствует.
+Будущие частичные месяцы требуют явного контроля покрытия до сравнения периодов.
+Блокирующих противоречий в текущем DWH не обнаружено.
+Рекомендация: семиколоночный разреженный MART Month + Geography,
+все пять базовых мер из fact_order, производные KPI и рейтинг — в Power BI.
+Создан только документ; SQL, PostgreSQL и остальные файлы не изменялись.
+
+13. ОФИЦИАЛЬНЫЕ ИСТОЧНИКИ POWER BI
+
+Dimensions фильтруют facts через связи one-to-many:
+https://learn.microsoft.com/en-us/power-bi/guidance/star-schema
+Направление и кардинальность связей:
+https://learn.microsoft.com/en-us/power-bi/transform-model/desktop-relationships-understand
+Периоды более высокого grain связываются с календарём по первому дню периода:
+https://learn.microsoft.com/en-us/power-bi/guidance/relationships-many-to-many#relate-higher-grain-time-periods
+TOPN и совпадения значений на границе отбора:
+https://learn.microsoft.com/en-us/dax/topn-function-dax

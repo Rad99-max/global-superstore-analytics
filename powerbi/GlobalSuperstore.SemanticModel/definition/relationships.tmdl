@@ -1,0 +1,52 @@
+relationship cded0e38-0a50-2668-90d8-bcf38cbe166b
+	fromColumn: 'mart executive_monthly'.month_date
+	toColumn: 'dwh dim_date'.calendar_date
+
+relationship d879a05c-005e-91d2-0833-84d12017c59d
+	fromColumn: 'mart sales_profitability_monthly'.month_date
+	toColumn: 'dwh dim_date'.calendar_date
+
+relationship c20c31b3-8ead-804a-143f-4f5a4334d089
+	fromColumn: 'mart geographic_monthly'.month_date
+	toColumn: 'dwh dim_date'.calendar_date
+
+relationship 0de18691-8086-c04b-cbe9-70ef4e8d6019
+	fromColumn: 'mart customer_monthly'.month_date
+	toColumn: 'dwh dim_date'.calendar_date
+
+relationship f1b54d04-53df-f12e-7abc-3bc0cc65f26e
+	fromColumn: 'mart product_monthly'.month_date
+	toColumn: 'dwh dim_date'.calendar_date
+
+relationship b5bdbab9-c67b-450c-5805-19503f51019a
+	fromColumn: 'mart customer_monthly'.customer_key
+	toColumn: 'dwh dim_customer'.customer_key
+
+relationship 100420e3-f84a-9de4-3aac-663cc52b4b78
+	fromColumn: 'mart product_monthly'.product_key
+	toColumn: 'dwh dim_product'.product_key
+
+relationship 12fd303c-8f94-d447-3ac9-36c7fffe1e61
+	fromColumn: 'mart geographic_monthly'.geography_key
+	toColumn: 'dwh dim_geography'.geography_key
+
+relationship 2c998521-5059-33b2-0358-188b9abb2321
+	fromColumn: 'mart sales_profitability_monthly'.discount_group
+	toColumn: BusinessDiscountGroup.discount_group
+
+relationship dc0507d5-e5e3-609d-477a-6d6805a87e3d
+	fromColumn: 'mart product_monthly'.discount_group
+	toColumn: BusinessDiscountGroup.discount_group
+
+relationship b4355a44-fe04-4de2-a73f-95246dc4c626
+	fromColumn: 'mart order_discount_monthly'.month_date
+	toColumn: 'dwh dim_date'.calendar_date
+
+relationship 4eb85919-4ea5-45b6-8e64-86f9e1ffabc0
+	fromColumn: 'mart order_discount_monthly'.order_discount_category
+	toColumn: OrderDiscountCategory.order_discount_category
+
+relationship ff673fa3-b4c1-428e-aeee-03cc361d5044
+	fromColumn: 'mart sales_line_profitability_monthly'.month_date
+	toColumn: 'dwh dim_date'.calendar_date
+

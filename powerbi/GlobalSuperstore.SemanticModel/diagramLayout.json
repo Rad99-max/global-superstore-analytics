@@ -1,0 +1,230 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 301.52328881730728,
+        "y": 0
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 0,
+            "y": 50
+          },
+          "nodeIndex": "dwh dim_customer",
+          "nodeLineageTag": "9f3f977b-1ce3-4d60-8c34-da441120b897",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 284,
+            "y": 0
+          },
+          "nodeIndex": "dwh dim_date",
+          "nodeLineageTag": "8b036a64-c1ca-40f3-9057-38006ccf496b",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 568,
+            "y": 50
+          },
+          "nodeIndex": "dwh dim_geography",
+          "nodeLineageTag": "81e95bbc-e84f-41ed-8bd7-88eedc43a9fc",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 852,
+            "y": 38
+          },
+          "nodeIndex": "dwh dim_product",
+          "nodeLineageTag": "f7299a76-0e26-44ea-ba37-8e0d27493bd8",
+          "size": {
+            "height": 224,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1136,
+            "y": 62
+          },
+          "nodeIndex": "mart customer_monthly",
+          "nodeLineageTag": "c40249fd-5a25-43cb-8a1a-a1b8e16848bf",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1420,
+            "y": 50
+          },
+          "nodeIndex": "mart executive_monthly",
+          "nodeLineageTag": "1240fd2b-9795-4d49-8d68-37aad3aa121f",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1704,
+            "y": 26
+          },
+          "nodeIndex": "mart geographic_monthly",
+          "nodeLineageTag": "2ddcdfa4-51c5-483a-8d84-44a74d5142d2",
+          "size": {
+            "height": 248,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1988,
+            "y": 50
+          },
+          "nodeIndex": "mart product_monthly",
+          "nodeLineageTag": "1767009c-2e0e-4822-a07e-b7b43067b78f",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 2272,
+            "y": 50
+          },
+          "nodeIndex": "mart sales_profitability_monthly",
+          "nodeLineageTag": "5cfb89dc-bc07-4279-a188-99fad6163d64",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 2556,
+            "y": 0
+          },
+          "nodeIndex": "BusinessDiscountGroup",
+          "nodeLineageTag": "e93ebcad-26e0-4286-9923-9d3bf6753c10",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 2840,
+            "y": 98
+          },
+          "nodeIndex": "Measures (2)",
+          "nodeLineageTag": "16bc0e31-ce67-46e4-92e8-d0bef6177259",
+          "size": {
+            "height": 104,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 3509.9225086634851,
+            "y": 186.56144422139195
+          },
+          "nodeIndex": "mart order_discount_monthly",
+          "nodeLineageTag": "9841be84-de89-4684-b95e-363270e8f2dc",
+          "size": {
+            "height": 248,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 3124,
+            "y": 0
+          },
+          "nodeIndex": "OrderDiscountCategory",
+          "nodeLineageTag": "36397b7a-34fb-4109-a193-36d2196523e9",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 3793.9225086634851,
+            "y": 0
+          },
+          "nodeIndex": "mart sales_line_profitability_monthly",
+          "nodeLineageTag": "c449f7fd-2f44-4c8e-8d04-07d4df8ccf50",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 4077.9225086634851,
+            "y": 129.280722110696
+          },
+          "nodeIndex": "Customer Size Band",
+          "nodeLineageTag": "c36adc3f-dcd3-44ad-b4da-12fb18baa1d4",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 4361.9225086634851,
+            "y": 153.280722110696
+          },
+          "nodeIndex": "Customer Type",
+          "nodeLineageTag": "bdedef26-b76d-4951-a36c-59b20e133d4e",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        }
+      ],
+      "name": "All tables",
+      "zoomValue": 44.905697313103978,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "All tables",
+  "defaultDiagram": "All tables"
+}

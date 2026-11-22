@@ -1,0 +1,52 @@
+# Project generated data
+data/raw/*
+
+# Source dataset: downloaded by the link in README (folder kept via .gitkeep)
+data/source/*.xlsx
+
+# Local report export used for README screenshots
+docs/img/report.pdf
+
+# Pipeline outputs
+*.log
+
+# Virtual environments
+.venv/
+env/
+venv/
+__pypackages__/
+
+# Local environment / secrets
+.env
+.env.local
+.env.dev
+.env.prod
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.mypy_cache/
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE and system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# DBeaver / Eclipse
+.dbeaver/
+.project
+.settings/
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+
+apm_modules/
+
+# Claude Code local settings
+.claude/settings.local.json

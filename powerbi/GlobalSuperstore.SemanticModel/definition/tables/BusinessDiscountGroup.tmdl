@@ -1,0 +1,36 @@
+table BusinessDiscountGroup
+	lineageTag: e93ebcad-26e0-4286-9923-9d3bf6753c10
+
+	column discount_group
+		dataType: string
+		lineageTag: a9072a7d-8bf1-41e6-a474-2d174d6e24d1
+		summarizeBy: none
+		sourceColumn: discount_group
+		sortByColumn: sort_order
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column sort_order
+		dataType: int64
+		formatString: 0
+		lineageTag: c5d975d7-9da7-4328-99e0-bb4c9aaf72f6
+		summarizeBy: none
+		sourceColumn: sort_order
+
+		annotation SummarizationSetBy = User
+
+	partition BusinessDiscountGroup = m
+		mode: import
+		source =
+				let
+				    Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i45WMlBV0lEyVIrVATIfNUw2BPONwHxDkIARWMAYLGAEEjAGC5iABYBsbSDHFMwJ9fP28w/3A/LNwHxPvzBHH08XIN9cKTYWAA==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [discount_group = _t, sort_order = _t]),
+				    #"Changed Type" = Table.TransformColumnTypes(Source,{{"discount_group", type text}, {"sort_order", Int64.Type}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,64 @@
+table 'dwh dim_product'
+	lineageTag: f7299a76-0e26-44ea-ba37-8e0d27493bd8
+
+	column product_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 18b793e2-f44f-4aae-859b-0702a5d28994
+		summarizeBy: none
+		sourceColumn: product_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_id
+		dataType: string
+		lineageTag: ae094b4e-c852-4ad7-8bf2-dec8a3af62f3
+		summarizeBy: none
+		sourceColumn: product_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_name
+		dataType: string
+		lineageTag: 179f98a5-4f36-4ec1-9b96-5903552985b4
+		summarizeBy: none
+		sourceColumn: product_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column category
+		dataType: string
+		lineageTag: 5c968852-ada0-40f8-8a30-36c5ec5735cf
+		summarizeBy: none
+		sourceColumn: category
+
+		annotation SummarizationSetBy = Automatic
+
+	column sub_category
+		dataType: string
+		lineageTag: 3a22e49d-57df-47ff-a895-2e0f472b1b92
+		summarizeBy: none
+		sourceColumn: sub_category
+
+		annotation SummarizationSetBy = Automatic
+
+	column _dwh_loaded_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 94e85ca8-3690-4786-8f5c-7177da7dcb8a
+		summarizeBy: none
+		sourceColumn: _dwh_loaded_at
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'dwh dim_product' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5432", "sales_dwh"),
+				    dwh_dim_product = Source{[Schema="dwh",Item="dim_product"]}[Data]
+				in
+				    dwh_dim_product
+
+	annotation PBI_ResultType = Table
+

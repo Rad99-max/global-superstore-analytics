@@ -1,0 +1,47 @@
+table 'Customer Size Band'
+	lineageTag: c36adc3f-dcd3-44ad-b4da-12fb18baa1d4
+
+	column Band
+		lineageTag: 9f1aa037-fefa-4fa8-a02a-830ce2b5b2fa
+		isNameInferred
+		sourceColumn: [Band]
+		sortByColumn: 'Band Sort'
+
+	column 'Band Sort'
+		isHidden
+		formatString: 0
+		lineageTag: a514d4b7-550b-4413-8679-a2a3a7a186e1
+		isNameInferred
+		sourceColumn: [Band Sort]
+
+	column 'Min Sales'
+		isHidden
+		formatString: #,0
+		lineageTag: d3faab96-b4e9-4c00-bc8d-8dd23a17a93a
+		isNameInferred
+		sourceColumn: [Min Sales]
+
+	column 'Max Sales'
+		isHidden
+		formatString: #,0
+		lineageTag: eaf63bf3-0c40-4ff8-a620-648def02fb7f
+		isNameInferred
+		sourceColumn: [Max Sales]
+
+	partition 'Customer Size Band' = calculated
+		mode: import
+		source =
+				DATATABLE (
+				    "Band",      STRING,
+				    "Band Sort", INTEGER,
+				    "Min Sales", DOUBLE,
+				    "Max Sales", DOUBLE,
+				    {
+				        { "< 100",     1,    0,  100 },
+				        { "100–500",   2,  100,  500 },
+				        { "500–1K",    3,  500, 1000 },
+				        { "1K–2.5K",   4, 1000, 2500 },
+				        { "≥ 2.5K",    5, 2500, BLANK () }
+				    }
+				)
+

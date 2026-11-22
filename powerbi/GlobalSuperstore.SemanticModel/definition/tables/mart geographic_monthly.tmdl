@@ -1,0 +1,102 @@
+table 'mart geographic_monthly'
+	lineageTag: 2ddcdfa4-51c5-483a-8d84-44a74d5142d2
+
+	column month_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 899c0336-9fd6-426e-9253-fcb758ea71a5
+		summarizeBy: none
+		sourceColumn: month_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column geography_key
+		dataType: int64
+		formatString: 0
+		lineageTag: e216d271-5f79-489d-8022-278a9631c39a
+		summarizeBy: none
+		sourceColumn: geography_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column sales
+		dataType: double
+		lineageTag: bf57954f-0fd0-4fa7-a7ed-a11274727977
+		summarizeBy: sum
+		sourceColumn: sales
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column profit
+		dataType: double
+		lineageTag: a6fbf262-7392-4da1-ad09-6657e44c2317
+		summarizeBy: sum
+		sourceColumn: profit
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column loss_making_sales
+		dataType: double
+		lineageTag: d3a264f5-5de1-4883-bdcf-26ff0e0fb846
+		summarizeBy: sum
+		sourceColumn: loss_making_sales
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column orders
+		dataType: int64
+		formatString: 0
+		lineageTag: 551df3af-28e3-40d1-b678-4d59277c2466
+		summarizeBy: sum
+		sourceColumn: orders
+
+		annotation SummarizationSetBy = Automatic
+
+	column unprofitable_orders
+		dataType: int64
+		formatString: 0
+		lineageTag: 97ab9257-3666-4165-81f5-56b59ad05b96
+		summarizeBy: sum
+		sourceColumn: unprofitable_orders
+
+		annotation SummarizationSetBy = Automatic
+
+	column sales_30plus
+		dataType: double
+		lineageTag: 266ddd7a-cd32-4e49-8468-0d1c7d232c6a
+		summarizeBy: sum
+		sourceColumn: sales_30plus
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column profit_30plus
+		dataType: double
+		lineageTag: 152c50b7-b3a2-4b07-b78c-ce4f2bfe693c
+		summarizeBy: sum
+		sourceColumn: profit_30plus
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition 'mart geographic_monthly' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5432", "sales_dwh"),
+				    mart_geographic_monthly = Source{[Schema="mart",Item="geographic_monthly"]}[Data]
+				in
+				    mart_geographic_monthly
+
+	annotation PBI_ResultType = Table
+

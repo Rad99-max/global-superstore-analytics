@@ -1,0 +1,64 @@
+table 'mart product_monthly'
+	lineageTag: 1767009c-2e0e-4822-a07e-b7b43067b78f
+
+	column month_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 3e1f9620-ce61-4fce-b53e-160650fb2d9d
+		summarizeBy: none
+		sourceColumn: month_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column product_key
+		dataType: int64
+		formatString: 0
+		lineageTag: d3da5b99-fe7b-4404-9a8e-198ee05fe2c0
+		summarizeBy: none
+		sourceColumn: product_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column discount_group
+		dataType: string
+		lineageTag: d60ea72c-d755-4716-8557-cea8ed913dfb
+		summarizeBy: none
+		sourceColumn: discount_group
+
+		annotation SummarizationSetBy = Automatic
+
+	column sales
+		dataType: double
+		lineageTag: 13795987-7271-495e-a286-d3a5b4770bef
+		summarizeBy: sum
+		sourceColumn: sales
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column profit
+		dataType: double
+		lineageTag: 9a27f2c9-10aa-40f1-856c-dadbac8d687c
+		summarizeBy: sum
+		sourceColumn: profit
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition 'mart product_monthly' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5432", "sales_dwh"),
+				    mart_product_monthly = Source{[Schema="mart",Item="product_monthly"]}[Data]
+				in
+				    mart_product_monthly
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

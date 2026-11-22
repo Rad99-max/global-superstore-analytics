@@ -1,0 +1,56 @@
+table 'dwh dim_geography'
+	lineageTag: 81e95bbc-e84f-41ed-8bd7-88eedc43a9fc
+
+	column geography_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 16bbf825-f5e8-46bb-a5c4-6abbb62bc38c
+		summarizeBy: none
+		sourceColumn: geography_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column market
+		dataType: string
+		lineageTag: 6d4d4119-32bb-4297-a0fe-29e0ccbe9b7e
+		summarizeBy: none
+		sourceColumn: market
+
+		annotation SummarizationSetBy = Automatic
+
+	column region
+		dataType: string
+		lineageTag: 4892ea54-8a53-497a-9d10-da76df48b61d
+		summarizeBy: none
+		sourceColumn: region
+
+		annotation SummarizationSetBy = Automatic
+
+	column country
+		dataType: string
+		lineageTag: 2cf26d68-27b1-4756-9368-76be9f0cddb3
+		summarizeBy: none
+		sourceColumn: country
+
+		annotation SummarizationSetBy = Automatic
+
+	column _dwh_loaded_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 064866d7-69b3-45bd-8305-f789bc3c9f44
+		summarizeBy: none
+		sourceColumn: _dwh_loaded_at
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'dwh dim_geography' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5432", "sales_dwh"),
+				    dwh_dim_geography = Source{[Schema="dwh",Item="dim_geography"]}[Data]
+				in
+				    dwh_dim_geography
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,299 @@
+{
+  "position": {
+    "width": 409,
+    "y": 286,
+    "z": 23000,
+    "x": 1423,
+    "tabOrder": 23000,
+    "height": 28
+  },
+  "name": "b2c9e3a4d8574fc6a102",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "visual": {
+    "drillFilterOtherVisuals": true,
+    "objects": {
+      "values": [
+        {
+          "selector": {
+            "id": "Coverage 0"
+          },
+          "properties": {
+            "expr": {
+              "expr": {
+                "Min": {
+                  "IncludeAllTypes": 1,
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "Subquery": {
+                          "Query": {
+                            "From": [
+                              {
+                                "Name": "m",
+                                "Entity": "Measures (2)",
+                                "Type": 0
+                              }
+                            ],
+                            "Select": [
+                              {
+                                "Name": "Geo Coverage Prefix",
+                                "Measure": {
+                                  "Expression": {
+                                    "SourceRef": {
+                                      "Source": "m"
+                                    }
+                                  },
+                                  "Property": "Geo Coverage Prefix"
+                                }
+                              }
+                            ],
+                            "Version": 2
+                          }
+                        }
+                      },
+                      "Property": "Geo Coverage Prefix"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "selector": {
+            "id": "Coverage 1"
+          },
+          "properties": {
+            "expr": {
+              "expr": {
+                "Min": {
+                  "IncludeAllTypes": 1,
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "Subquery": {
+                          "Query": {
+                            "From": [
+                              {
+                                "Name": "m",
+                                "Entity": "Measures (2)",
+                                "Type": 0
+                              }
+                            ],
+                            "Select": [
+                              {
+                                "Name": "Geo Coverage Positive Count",
+                                "Measure": {
+                                  "Expression": {
+                                    "SourceRef": {
+                                      "Source": "m"
+                                    }
+                                  },
+                                  "Property": "Geo Coverage Positive Count"
+                                }
+                              }
+                            ],
+                            "Version": 2
+                          }
+                        }
+                      },
+                      "Property": "Geo Coverage Positive Count"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "selector": {
+            "id": "Coverage 2"
+          },
+          "properties": {
+            "expr": {
+              "expr": {
+                "Min": {
+                  "IncludeAllTypes": 1,
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "Subquery": {
+                          "Query": {
+                            "From": [
+                              {
+                                "Name": "m",
+                                "Entity": "Measures (2)",
+                                "Type": 0
+                              }
+                            ],
+                            "Select": [
+                              {
+                                "Name": "Geo Coverage Suffix",
+                                "Measure": {
+                                  "Expression": {
+                                    "SourceRef": {
+                                      "Source": "m"
+                                    }
+                                  },
+                                  "Property": "Geo Coverage Suffix"
+                                }
+                              }
+                            ],
+                            "Version": 2
+                          }
+                        }
+                      },
+                      "Property": "Geo Coverage Suffix"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "horizontalTextAlignment": "center",
+                "textRuns": [
+                  {
+                    "textStyle": {
+                      "color": "#60666D",
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "12pt"
+                    },
+                    "value": {
+                      "selector": {
+                        "id": "Coverage 0"
+                      },
+                      "propertyIdentifier": {
+                        "objectName": "values",
+                        "propertyName": "expr"
+                      }
+                    }
+                  },
+                  {
+                    "textStyle": {
+                      "color": "#B42332",
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "12pt"
+                    },
+                    "value": {
+                      "selector": {
+                        "id": "Coverage 1"
+                      },
+                      "propertyIdentifier": {
+                        "objectName": "values",
+                        "propertyName": "expr"
+                      }
+                    }
+                  },
+                  {
+                    "textStyle": {
+                      "color": "#60666D",
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "12pt"
+                    },
+                    "value": {
+                      "selector": {
+                        "id": "Coverage 2"
+                      },
+                      "propertyIdentifier": {
+                        "objectName": "values",
+                        "propertyName": "expr"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "background": [
+        {
+          "properties": {
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            },
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "border": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "padding": [
+        {
+          "properties": {
+            "left": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            },
+            "right": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            },
+            "bottom": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            },
+            "top": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualType": "textbox"
+  }
+}

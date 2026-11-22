@@ -1,0 +1,61 @@
+table 'mart sales_profitability_monthly'
+	lineageTag: 5cfb89dc-bc07-4279-a188-99fad6163d64
+
+	column month_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: bce9506b-de4e-407a-9a5f-8633359dc2ee
+		summarizeBy: none
+		sourceColumn: month_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column order_profitability_status
+		dataType: string
+		lineageTag: 936d5fb9-1a98-41fd-b046-a9083b9567eb
+		summarizeBy: none
+		sourceColumn: order_profitability_status
+
+		annotation SummarizationSetBy = Automatic
+
+	column discount_group
+		dataType: string
+		lineageTag: 766f9cb0-15f1-4808-8f97-a29af0af7c1c
+		summarizeBy: none
+		sourceColumn: discount_group
+
+		annotation SummarizationSetBy = Automatic
+
+	column sales
+		dataType: double
+		lineageTag: 4631092f-f931-40d8-ba0e-4a72c8d10c30
+		summarizeBy: sum
+		sourceColumn: sales
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column profit
+		dataType: double
+		lineageTag: 229a6aae-a962-4fd4-bbff-0e1439ff773c
+		summarizeBy: sum
+		sourceColumn: profit
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition 'mart sales_profitability_monthly' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5432", "sales_dwh"),
+				    mart_sales_profitability_monthly = Source{[Schema="mart",Item="sales_profitability_monthly"]}[Data]
+				in
+				    mart_sales_profitability_monthly
+
+	annotation PBI_ResultType = Table
+

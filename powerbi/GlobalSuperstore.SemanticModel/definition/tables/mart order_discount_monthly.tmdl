@@ -1,0 +1,67 @@
+table 'mart order_discount_monthly'
+	lineageTag: 9841be84-de89-4684-b95e-363270e8f2dc
+
+	column month_date
+		dataType: dateTime
+		lineageTag: b251e84d-dfd9-45c8-b3d6-0a2d664c8de4
+		summarizeBy: none
+		sourceColumn: month_date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column order_discount_category
+		dataType: string
+		lineageTag: 662534bc-7c5a-4f3f-bc9b-4cd80bfbbe3a
+		summarizeBy: none
+		sourceColumn: order_discount_category
+
+	column sales
+		dataType: double
+		lineageTag: 8aca3358-f0c0-4679-b87d-38fa042d8150
+		summarizeBy: sum
+		sourceColumn: sales
+
+	column profit
+		dataType: double
+		lineageTag: b4bbece0-8bd2-4e5f-bf66-5948621be38e
+		summarizeBy: sum
+		sourceColumn: profit
+
+	column orders
+		dataType: int64
+		lineageTag: 7f2545d1-5778-45a7-95ac-9cb2f16794f4
+		summarizeBy: sum
+		sourceColumn: orders
+
+	column loss_making_orders
+		dataType: int64
+		lineageTag: 3f72ced2-b5ef-4274-8439-d80c92c28769
+		summarizeBy: sum
+		sourceColumn: loss_making_orders
+
+	column loss_making_sales
+		dataType: double
+		lineageTag: 75f9a9f1-ce35-41d2-90ed-50c9bfef80af
+		summarizeBy: sum
+		sourceColumn: loss_making_sales
+
+	column loss
+		dataType: double
+		formatString: #,0.00
+		lineageTag: 8fcc3bf6-6638-446b-b8e7-2852ece089b0
+		summarizeBy: sum
+		sourceColumn: loss
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'mart order_discount_monthly' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5432", "sales_dwh"),
+				    mart_order_discount_monthly = Source{[Schema="mart",Item="order_discount_monthly"]}[Data]
+				in
+				    mart_order_discount_monthly
+
+	annotation PBI_ResultType = Table
+

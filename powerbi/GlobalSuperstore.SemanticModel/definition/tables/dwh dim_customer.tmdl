@@ -1,0 +1,56 @@
+table 'dwh dim_customer'
+	lineageTag: 9f3f977b-1ce3-4d60-8c34-da441120b897
+
+	column customer_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 634bcbb3-3961-42e2-a826-de1695686c15
+		summarizeBy: none
+		sourceColumn: customer_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_id
+		dataType: string
+		lineageTag: 7b539403-2b2d-40b5-8831-0a014137bee9
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_name
+		dataType: string
+		lineageTag: c3a83956-317c-40fe-a5ae-04e5f873981b
+		summarizeBy: none
+		sourceColumn: customer_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column segment
+		dataType: string
+		lineageTag: 70463f6d-695c-4638-8d7a-eaed9fe721d8
+		summarizeBy: none
+		sourceColumn: segment
+
+		annotation SummarizationSetBy = Automatic
+
+	column _dwh_loaded_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: da272f9a-7b13-439c-9237-ab5191cbb2b2
+		summarizeBy: none
+		sourceColumn: _dwh_loaded_at
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'dwh dim_customer' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5432", "sales_dwh"),
+				    dwh_dim_customer = Source{[Schema="dwh",Item="dim_customer"]}[Data]
+				in
+				    dwh_dim_customer
+
+	annotation PBI_ResultType = Table
+

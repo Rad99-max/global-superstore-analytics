@@ -1,0 +1,74 @@
+table 'mart customer_monthly'
+	lineageTag: c40249fd-5a25-43cb-8a1a-a1b8e16848bf
+
+	column month_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: e76969ec-237c-43c6-a911-a9861621eeab
+		summarizeBy: none
+		sourceColumn: month_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column customer_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 161372f0-7afa-415c-b94c-f3b84de9def7
+		summarizeBy: none
+		sourceColumn: customer_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column sales
+		dataType: double
+		lineageTag: 8add3491-25eb-44ce-9801-4b598850dc5a
+		summarizeBy: sum
+		sourceColumn: sales
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column profit
+		dataType: double
+		lineageTag: 63e98ede-7ab4-4388-ba00-f7e2183c6218
+		summarizeBy: sum
+		sourceColumn: profit
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column sales_30plus
+		dataType: double
+		lineageTag: 9b87d429-dae6-46e2-9d24-3a5e7fc1b892
+		summarizeBy: sum
+		sourceColumn: sales_30plus
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column profit_30plus
+		dataType: double
+		lineageTag: d2752727-9aa1-4ba1-a0e5-607168570c19
+		summarizeBy: sum
+		sourceColumn: profit_30plus
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition 'mart customer_monthly' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5432", "sales_dwh"),
+				    mart_customer_monthly = Source{[Schema="mart",Item="customer_monthly"]}[Data]
+				in
+				    mart_customer_monthly
+
+	annotation PBI_ResultType = Table
+

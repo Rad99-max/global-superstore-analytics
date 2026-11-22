@@ -1,0 +1,224 @@
+GLOBAL SUPERSTORE — ОКОНЧАТЕЛЬНЫЙ ЛОГИЧЕСКИЙ ПРОЕКТ DWH
+
+1. ОБЛАСТЬ И ПРИНЯТЫЕ РЕШЕНИЯ
+
+Целевая схема: dwh. Документ описывает модель, а не создаёт объекты.
+Источник: STAGING одного явно указанного SUCCESS load_id:
+f44edd71-d712-4fa0-81d3-98ad24e00599.
+Первый опубликованный снимок: 51 290 Orders, 1 079 Returns; People не включается.
+Order = (order_id, customer_id), собственный surrogate order_key.
+Customer = customer_id; Product = product_id.
+Geography = (market, region, country), без вывода Region из Country.
+Основная аналитическая дата — Order Date. Ship Date — роль даты строки заказа.
+Customer/Product profitability вычисляется в аналитическом контексте, не хранится в dimensions.
+Идентификаторы исходных бизнес-сущностей остаются TEXT.
+
+2. ОБЩИЕ ПРАВИЛА КЛЮЧЕЙ И ПРОИСХОЖДЕНИЯ
+
+Surrogate keys: BIGINT, кроме date_key INTEGER; PK NOT NULL, значения назначает DWH.
+Business keys dimensions и заказа обязательны и уникальны в опубликованном снимке.
+Связи FK — без ON DELETE CASCADE; факты не должны исчезать при изменении dimensions.
+Отдельные UNIQUE ограничения перечислены ниже. Они не являются дедупликацией строк источника.
+Технические поля всех таблиц: _dwh_loaded_at TIMESTAMPTZ NOT NULL.
+Во всех трёх фактах дополнительно:
+_load_id UUID NOT NULL — происхождение из raw.load_log(load_id), FK;
+_dq_flags TEXT[] NOT NULL — исходные/унаследованные коды, пустой массив при отсутствии.
+В line и return signal дополнительно: _raw_id BIGINT NOT NULL UNIQUE.
+Это соответствующий исходный RAW _raw_id; не естественный ключ бизнес-сущности.
+FK _raw_id на STAGING не нужен: происхождение проверяется процессом построения,
+а STAGING может пересобираться. Excel-файл/лист/строка доступны через RAW _raw_id и _load_id.
+У fact_order нет одного _raw_id: его происхождение — все строки с данным order_key.
+В dimensions не копируются _raw_id, _load_id и массивы флагов каждой исходной строки.
+
+3. dim_customer
+
+Grain: один customer_id. PK: customer_key. Natural key: customer_id, UNIQUE.
+поле | PostgreSQL тип | назначение
+customer_key | BIGINT | surrogate PK
+customer_id | TEXT NOT NULL | исходный бизнес-идентификатор
+customer_name | TEXT | имя из STAGING, без объединения одноимённых клиентов
+segment | TEXT | сегмент клиента
+_dwh_loaded_at | TIMESTAMPTZ NOT NULL | время публикации
+Построение: одна запись для каждого customer_id; до выбора атрибутов проверить FD.
+В текущем снимке customer_id -> customer_name и customer_id -> segment выполняются;
+NULL этих полей нет. Не выбирать произвольный MIN/MAX при будущих конфликтах.
+Segment в fact_order_line и fact_order не дублируется.
+Ожидается: 17 415 строк.
+
+4. dim_product
+
+Grain: один product_id. PK: product_key. Natural key: product_id, UNIQUE.
+product_key BIGINT; product_id TEXT NOT NULL; product_name TEXT;
+category TEXT; sub_category TEXT; _dwh_loaded_at TIMESTAMPTZ NOT NULL.
+Построение: одна запись для каждого product_id после проверки однозначности атрибутов.
+В текущем снимке product_id -> (product_name, category, sub_category) выполняется.
+Не хранить Sales/Profit, profitability или Discount Group в dimension.
+Ожидается: 3 788 строк.
+
+5. dim_geography
+
+Grain: одна наблюдаемая комбинация (market, region, country).
+PK: geography_key. Natural key: (market, region, country), UNIQUE.
+geography_key BIGINT; market TEXT NOT NULL; region TEXT NOT NULL;
+country TEXT NOT NULL; _dwh_loaded_at TIMESTAMPTZ NOT NULL.
+Построение: distinct комбинации из Orders выбранной загрузки.
+City/State/Postal Code не входят в эту dimension: это изменило бы утверждённый grain.
+Canada не заменяется Eastern/Western Canada. Country не определяет Region однозначно.
+Ожидается: 168 строк. Синтетические строки неизвестной географии сейчас не добавляются.
+
+6. dim_date
+
+Grain: календарный день. PK: date_key. Natural key: calendar_date, UNIQUE.
+date_key INTEGER; calendar_date DATE NOT NULL; calendar_year SMALLINT;
+calendar_quarter SMALLINT; calendar_month SMALLINT; day_of_month SMALLINT;
+iso_day_of_week SMALLINT; iso_week SMALLINT; iso_year SMALLINT;
+_dwh_loaded_at TIMESTAMPTZ NOT NULL.
+Все производные календарные поля заполняются, без NULL.
+Построение: непрерывный календарь от минимальной до максимальной даты среди
+Order Date и Ship Date. Один экземпляр dimension используется в двух ролях.
+Для первого снимка: 2012-01-01..2016-01-07 включительно, 1 468 строк.
+Не создавать dim_time: времени суток в источнике нет. Праздники и SLA не придумывать.
+
+7. fact_order_line
+
+Grain: одна исходная товарная строка STAGING Orders, без дедупликации/агрегации.
+PK: order_line_key. Надёжный естественный бизнес-ключ строки не установлен.
+поле | PostgreSQL тип | ключ/назначение
+order_line_key | BIGINT | surrogate PK
+order_key | BIGINT NOT NULL | FK fact_order(order_key)
+customer_key | BIGINT NOT NULL | FK dim_customer(customer_key)
+product_key | BIGINT NOT NULL | FK dim_product(product_key)
+geography_key | BIGINT NOT NULL | FK dim_geography(geography_key)
+order_date_key | INTEGER NOT NULL | FK dim_date(date_key), основная дата
+ship_date_key | INTEGER | FK dim_date(date_key), роль даты отгрузки
+row_id | INTEGER | исходный Row ID; не UNIQUE business key
+quantity | INTEGER | исходное количество
+sales | NUMERIC | денежное значение без p,s и дополнительного ROUND
+profit | NUMERIC | исходный Profit, отрицательные значения допустимы
+shipping_cost | NUMERIC | исходный показатель, не компонент придуманной формулы Profit
+discount | NUMERIC | значение из STAGING без нового округления
+discount_group | TEXT NOT NULL | утверждённый диапазон скидки строки
+ship_mode | TEXT | атрибут строки, не произвольный атрибут всего заказа
+order_priority | TEXT | атрибут строки
+city | TEXT | адрес строки, без включения в geography grain
+state | TEXT | адрес строки
+postal_code | TEXT | сохранить семантику STAGING, включая 05408 и NULL
+_raw_id, _load_id, _dq_flags, _dwh_loaded_at | см. раздел 2 | происхождение
+Построение: 1:1 со STAGING Orders; разрешение order_key по паре order_id/customer_id.
+Не делать UNIQUE на (order_key, product_key): повторные строки товара допустимы.
+Не копировать order_id, customer_id, имена и Segment — доступны через ключи.
+Ожидается: 51 290 строк.
+
+8. fact_order
+
+Grain: один заказ (order_id, customer_id). PK: order_key.
+Business key: (order_id, customer_id); реализация UNIQUE(order_id, customer_key),
+так как dim_customer содержит ровно одну запись на customer_id.
+order_key BIGINT; order_id TEXT NOT NULL;
+customer_key BIGINT NOT NULL FK dim_customer(customer_key);
+geography_key BIGINT NOT NULL FK dim_geography(geography_key);
+order_date_key INTEGER NOT NULL FK dim_date(date_key);
+line_count BIGINT NOT NULL; total_quantity BIGINT;
+total_sales NUMERIC; total_profit NUMERIC; total_shipping_cost NUMERIC;
+_load_id, _dq_flags, _dwh_loaded_at — по разделу 2.
+Построение: группировка строк принятого заказа; line_count = количество строк,
+total_quantity = SUM(quantity), денежные итоги = SUM соответствующих NUMERIC line-полей.
+До назначения geography_key/order_date_key проверить единственность комбинации/даты;
+для всех 25 739 заказов текущего снимка это подтверждено, NULL ключевых атрибутов нет.
+_dq_flags = множество уникальных флагов составляющих строк, без удаления исходных кодов.
+Не назначать единственную Ship Date, Ship Mode или Order Priority по MIN/MAX.
+Не хранить Product, Discount/Discount Group, Segment и постоянный profitability status.
+Ожидается: 25 739 строк.
+
+9. ПРОВЕРКА ДУБЛИРОВАНИЯ МЕЖДУ ДВУМЯ ФАКТАМИ
+
+Преднамеренно повторяются три FK: customer_key, geography_key, order_date_key.
+Это позволяет независимо анализировать оба факта через общие dimensions.
+Обязательное правило процесса: эти три ключа line равны ключам его fact_order;
+сам по себе FK order_key этого не гарантирует. Не размножать бизнес-идентификаторы/имена.
+Преднамеренно повторяются меры: строковые показатели и агрегированные итоги заказа.
+fact_order нужен для order-level анализа и оценки компенсации убытков внутри заказа.
+Суммы двух фактов должны сверяться, но НИКОГДА не складываться между собой.
+После JOIN fact_order к деталям нельзя SUM(total_sales/total_profit): будет fan-out.
+В разрезах Product и Discount Group использовать line-меры и COUNT(DISTINCT order_key).
+Количество заказов по line-разрезам неаддитивно: один заказ может попасть в несколько групп.
+Убрано лишнее: Segment, customer_id и описания dimensions в обоих фактах;
+order_id хранится только в fact_order; shipping-атрибуты и Discount — только в line.
+_load_id, DQ и время публикации повторяются осознанно как технические атрибуты grain.
+
+10. fact_return_signal
+
+Grain: одна исходная запись Returns, а не доказанный возврат строки/всего заказа.
+PK: return_signal_key. Надёжный долговременный business key сигнала не установлен:
+(order_id, region) не объявляется UNIQUE, будущие повторные сигналы сохраняются.
+return_signal_key BIGINT; source_order_id TEXT; source_region TEXT;
+returned TEXT; order_key BIGINT NULL FK fact_order(order_key);
+match_status TEXT NOT NULL; candidate_order_count BIGINT NOT NULL;
+_raw_id, _load_id, _dq_flags, _dwh_loaded_at — по разделу 2.
+Построение: 1:1 со STAGING Returns. Кандидаты — заказы опубликованного снимка
+с совпадающим order_id. Не считать строки Order Line отдельными кандидатами.
+candidate_order_count — число разных order_key ДО проверки Region.
+Правила, в указанном порядке:
+0 кандидатов -> ORDER_NOT_FOUND, order_key NULL;
+более 1 кандидата -> AMBIGUOUS_ORDER_ID, order_key NULL, даже при одном совпавшем Region;
+1 кандидат и равный непустой Region -> MATCHED, заполнить order_key;
+1 кандидат, несовпадающий/неизвестный Region -> REGION_MISMATCH, order_key NULL.
+source_region остаётся независимым атрибутом Returns; geography_key по одному Region
+не выводить. При неизвестном Returned сохранить текст и его DQ-признак;
+MATCHED означает только разрешённую ссылку, а не подтверждение полного возврата.
+Ожидается: 1 079 строк; MATCHED 1 071, REGION_MISMATCH 6,
+AMBIGUOUS_ORDER_ID 2, ORDER_NOT_FOUND 0.
+В исходных DQ-флагах остаются RETURN_REGION_MISMATCH 8 и ORDER_REFERENCE_AMBIGUOUS 2:
+match_status не заменяет DQ и не обязан иметь те же количества.
+Не добавлять line-level is_returned, refund, возвращённое количество или return date.
+Отсутствие сигнала означает «возврат не наблюдался», а не доказанное отсутствие возврата.
+Количество сигналов и COUNT(DISTINCT order_key) связанных заказов — разные метрики.
+
+11. ЧИСЛОВЫЕ ПРАВИЛА И МЕТРИКИ
+
+Sales/Profit/Shipping Cost: NUMERIC БЕЗ (p,s), без нового округления.
+Контракт перехода из STAGING float8: value::text::numeric при extra_float_digits = 3,
+то есть десятичное round-trip представление; обычный float8::numeric не подменяет этот путь.
+NULL сохраняется. NaN/Infinity сейчас нет; при будущем появлении необходим явный DQ-разбор,
+они не должны незаметно попадать в финансовые агрегаты.
+Итоги заказов считать ПОСЛЕ перехода каждой строки в NUMERIC, а не SUM(float8)::numeric.
+Не округлять денежные показатели при построении; форматирование отделено от хранения.
+Это сохраняет представление STAGING, но не буквальные XML-токены исходного XLSX.
+Длинные хвосты присутствуют уже в Excel; экономическая точность из них не выводится.
+Discount переносится из STAGING, включая 0.002/0.202/0.402/0.602.
+Discount Group: '0'; '(0;0.10]'; '(0.10;0.20]'; '(0.20;0.30]';
+'(0.30;0.40]'; '(0.40;0.50]'; '(0.50;0.60]'; '(0.60;0.70]'; '(0.70;1]'.
+NULL -> 'UNKNOWN'; вне [0,1] -> 'INVALID', без исправления значения и снятия DQ.
+Profit Margin = SUM(profit)/NULLIF(SUM(sales),0)*100, не среднее строковых margins.
+Customer/Product/Order profitability: знак неокруглённого SUM(profit) выбранной группы.
+Не хранить статические profitability-атрибуты Customer/Product и готовые проценты в dimensions.
+Avg Discount = среднее по строкам; Sales-weighted Discount = SUM(discount*sales)/SUM(sales)
+при ненулевом знаменателе. Ни скидки, ни проценты не являются аддитивными мерами.
+Profit не пересчитывается из Sales/Discount/Shipping Cost; возвраты не меняют знак продаж.
+
+12. ПРАВИЛА ПУБЛИКАЦИИ И ОТКРЫТЫЕ ОГРАНИЧЕНИЯ
+
+Первая публикация строится атомарно из одного SUCCESS load_id, без смешивания снимков.
+Повторный запуск того же снимка не добавляет строки повторно и не меняет surrogate keys
+у сохранившихся сущностей/строк. Способ реализации будет отдельным этапом, DDL здесь нет.
+Нельзя добавлять load_id в business key заказа, чтобы скрыть дубли версий одного файла.
+До загрузки изменённой версии нужно утвердить replacement/history policy и сопоставление
+order lines между версиями: _raw_id характеризует загрузку, а не вечную бизнес-строку.
+Dimensions первой версии — одно состояние на natural key, без необоснованного SCD2.
+Политика обновления имён/Segment/классификации продукта в следующих снимках не утверждена.
+Будущие NULL business keys и конфликты функциональных зависимостей требуют отдельного DQ-
+решения; не выбирать произвольную запись, не терять строки и не изобретать Unknown mapping.
+Order=(order_id,customer_id) — принятое рабочее правило, не доказательство семантики источника.
+11 исходных конфликтных Order ID и их флаги сохраняются, клиентов по имени не объединять.
+Валюта/FX и экономический смысл Shipping Cost не установлены; их не реконструировать.
+Деньги не ограничивать двумя/четырьмя знаками без нового согласованного правила.
+Returns не содержит Customer ID, Product ID, количества, суммы и даты возврата;
+неоднозначность не разрешать автоматическим выбором Region или канадским crosswalk.
+City/State/Postal Code — сохранённые атрибуты строки, не новая географическая иерархия.
+Календарные праздники, SLA, время суток и People остаются вне текущей модели.
+Старые отчёты с COUNT(DISTINCT order_id) не равны новому числу заказов по order_key.
+Контроль первой публикации: 51 290 lines; 25 739 orders; 1 079 return signals;
+17 415 customers; 3 788 products; 168 geography tuples; 1 468 dates.
+
+Документ создан по read-only проверкам. PostgreSQL, Excel и существующие файлы не изменены.
+SQL DDL DWH и загрузка DWH на этом этапе не создавались и не выполнялись.

@@ -1,0 +1,28 @@
+table 'Customer Type'
+	lineageTag: bdedef26-b76d-4951-a36c-59b20e133d4e
+
+	column Type
+		lineageTag: 0c339c0d-1c6d-4f40-aa87-61453c153643
+		isNameInferred
+		sourceColumn: [Type]
+		sortByColumn: 'Type Sort'
+
+	column 'Type Sort'
+		isHidden
+		formatString: 0
+		lineageTag: 3a9368e0-285a-476c-ba10-2ed59da3dd1b
+		isNameInferred
+		sourceColumn: [Type Sort]
+
+	partition 'Customer Type' = calculated
+		mode: import
+		source =
+				DATATABLE (
+				    "Type",      STRING,
+				    "Type Sort", INTEGER,
+				    {
+				        { "New",       1 },
+				        { "Returning", 2 }
+				    }
+				)
+

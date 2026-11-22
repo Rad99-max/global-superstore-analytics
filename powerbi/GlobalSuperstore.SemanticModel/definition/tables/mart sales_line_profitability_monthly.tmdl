@@ -1,0 +1,46 @@
+table 'mart sales_line_profitability_monthly'
+	lineageTag: c449f7fd-2f44-4c8e-8d04-07d4df8ccf50
+
+	column month_date
+		dataType: dateTime
+		lineageTag: ee78185a-ae3e-403d-8b9e-ff881031c79c
+		summarizeBy: none
+		sourceColumn: month_date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column line_profitability_status
+		dataType: string
+		lineageTag: 04923f04-52b8-4fc4-a853-43064b01c997
+		summarizeBy: none
+		sourceColumn: line_profitability_status
+
+	column sales_lines
+		dataType: int64
+		lineageTag: e5e069e3-4b37-4ff8-b11e-96999d21ac0c
+		summarizeBy: sum
+		sourceColumn: sales_lines
+
+	column sales
+		dataType: double
+		lineageTag: 36e21c07-2ed0-42b8-bfc5-cd57844310b6
+		summarizeBy: sum
+		sourceColumn: sales
+
+	column profit
+		dataType: double
+		lineageTag: 1e78fc85-ad86-4ee3-b6a3-0f16f5a6a8fc
+		summarizeBy: sum
+		sourceColumn: profit
+
+	partition 'mart sales_line_profitability_monthly' = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5432", "sales_dwh"),
+				    Data = Source{[Schema="mart",Item="sales_line_profitability_monthly"]}[Data]
+				in
+				    Data
+
+	annotation PBI_ResultType = Table
+

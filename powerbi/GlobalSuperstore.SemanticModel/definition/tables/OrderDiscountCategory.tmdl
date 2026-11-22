@@ -1,0 +1,28 @@
+table OrderDiscountCategory
+	lineageTag: 36397b7a-34fb-4109-a193-36d2196523e9
+
+	column order_discount_category
+		dataType: string
+		lineageTag: 04157112-c1d4-4f1d-a3f4-1c140ba731c1
+		summarizeBy: none
+		sourceColumn: order_discount_category
+		sortByColumn: sort_order
+
+	column sort_order
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 9b1d9552-7d72-4777-9ea8-46a6a07b3b33
+		summarizeBy: none
+		sourceColumn: sort_order
+
+	partition OrderDiscountCategory = m
+		mode: import
+		source =
+				#table(
+				    type table [order_discount_category = text, sort_order = Int64.Type],
+				    {{"0%", 1}, {"0–10%", 2}, {"10–20%", 3}, {"20–30%", 4}, {"30%+", 5}, {"MIXED", 6}}
+				)
+
+	annotation PBI_ResultType = Table
+
