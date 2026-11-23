@@ -223,18 +223,18 @@ erDiagram
 
    > **Проверка источника.** Запуск начинается, только если SHA-256 исходного файла совпадает с утверждённым хешем (см. [Данные](#данные)). Иначе он останавливается на этапе `Preflight` и ничего не пишет в базу. Каждый SQL-этап получает `load_id` загрузки RAW от конвейера (настройка сеанса `pipeline.load_id`), поэтому скрипты `*_load_*.sql` запускайте через `run_pipeline.py`, а не напрямую через `psql`.
 
-6. **Роль только для чтения для Power BI (необязательно).** Выполните `sql/06_security/01_prepare_powerbi_reader.sql` через `psql`, затем задайте пароль и разрешите вход вручную, как описано в [docs/powerbi_reader.md](docs/powerbi_reader.md). Проверка — `02_verify_powerbi_reader.sql`.
+6. **Роль только для чтения для Power BI (необязательно).** Выполните `sql/06_security/01_prepare_powerbi_reader.sql` через `psql`, затем задайте пароль и разрешите вход вручную, как описано в [docs/powerbi_reader.ru.md](docs/powerbi_reader.ru.md). Проверка — `02_verify_powerbi_reader.sql`.
 
 7. **Отчёт.** Откройте `powerbi/GlobalSuperstore.pbip` в Power BI Desktop, по запросу введите учётные данные базы (Database authentication, пользователь `powerbi_reader`) и нажмите **Refresh**. Все источники данных указывают на `localhost:5432/sales_dwh`.
 
 ## Безопасность
 
-- Power BI подключается под `powerbi_reader`: роль читает 11 таблиц, используемых моделью, и не может изменять таблицы и объекты схемы. Аудит, выданные права и порядок проверки: [docs/powerbi_reader.md](docs/powerbi_reader.md).
+- Power BI подключается под `powerbi_reader`: роль читает 11 таблиц, используемых моделью, и не может изменять таблицы и объекты схемы. Аудит, выданные права и порядок проверки: [docs/powerbi_reader.ru.md](docs/powerbi_reader.ru.md).
 - Пароли и настройки подключения хранятся только в локальных файлах `.env`, исключённых из Git. Ошибки конфигурации никогда не выводят значения настроек.
 
 ## Ограничения
 
-- **Одна база, нет разделения DEV / PROD.** Оба ETL-профиля указывают на одну локальную базу `sales_dwh`, ETL подключается под `postgres`. План раздельных сред: [docs/dev_prod_plan.md](docs/dev_prod_plan.md) (не реализован).
+- **Одна база, нет разделения DEV / PROD.** Оба ETL-профиля указывают на одну локальную базу `sales_dwh`, ETL подключается под `postgres`. План раздельных сред: [docs/dev_prod_plan.ru.md](docs/dev_prod_plan.ru.md) (не реализован).
 - **Один утверждённый исходный файл.** Конвейер принимает только книгу с утверждённым SHA-256 (см. [Данные](#данные)). Для другой версии датасета нужно заменить `APPROVED_SOURCE_SHA256` в `run_pipeline.py` и заново пройти все сверки.
 - **Фиксированный источник данных в Power BI.** Все 11 источников используют `localhost:5432/sales_dwh`; параметров Server / Database нет.
 - **Нет CI и отдельных автотестов.** Проверки встроены в загрузчик на Python и SQL-скрипты.
@@ -247,10 +247,10 @@ erDiagram
 | Документ | Содержание |
 | --- | --- |
 | [docs/readme_findings.ru.md](docs/readme_findings.ru.md) | Основные выводы со сравнением с прошлым годом |
-| [docs/product_portfolio_plan.md](docs/product_portfolio_plan.md) | Страница Product Portfolio: анализ, решения, контрольные значения (на русском) |
-| [docs/customer_portfolio_plan.md](docs/customer_portfolio_plan.md) | Страница Customer Portfolio: анализ, решения, контрольные значения (на русском) |
-| [docs/powerbi_reader.md](docs/powerbi_reader.md) | Роль Power BI только для чтения: аудит, внедрение, проверка |
-| [docs/dev_prod_plan.md](docs/dev_prod_plan.md) | План разделения DEV / PROD (на русском) |
+| [docs/product_portfolio_plan.ru.md](docs/product_portfolio_plan.ru.md) | Страница Product Portfolio: анализ, решения, контрольные значения (на русском) |
+| [docs/customer_portfolio_plan.ru.md](docs/customer_portfolio_plan.ru.md) | Страница Customer Portfolio: анализ, решения, контрольные значения (на русском) |
+| [docs/powerbi_reader.ru.md](docs/powerbi_reader.ru.md) | Роль Power BI только для чтения: аудит, внедрение, проверка |
+| [docs/dev_prod_plan.ru.md](docs/dev_prod_plan.ru.md) | План разделения DEV / PROD (на русском) |
 
 ## Автор
 

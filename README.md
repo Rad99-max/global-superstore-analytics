@@ -234,7 +234,7 @@ Six hidden tooltip pages add details on hover.
 
 ## Limitations
 
-- **One database, no DEV / PROD separation.** Both ETL profiles point to the same local database `sales_dwh`, and the ETL connects as `postgres`. A plan for separate environments: [docs/dev_prod_plan.md](docs/dev_prod_plan.md) (not implemented).
+- **One database, no DEV / PROD separation.** Both ETL profiles point to the same local database `sales_dwh`, and the ETL connects as `postgres`. A plan for separate environments: [docs/dev_prod_plan.ru.md](docs/dev_prod_plan.ru.md) (in Russian; not implemented).
 - **One approved source file.** The pipeline accepts only the workbook with the approved SHA-256 (see [Dataset](#dataset)). Another version of the dataset requires changing `APPROVED_SOURCE_SHA256` in `run_pipeline.py` and passing all reconciliation checks again.
 - **Fixed data source in Power BI.** All 11 sources use `localhost:5432/sales_dwh`; there are no Server / Database parameters.
 - **No CI or separate automated tests.** Checks are built into the Python loader and SQL scripts.
@@ -247,10 +247,10 @@ Six hidden tooltip pages add details on hover.
 | Document | Content |
 | --- | --- |
 | [docs/readme_findings.md](docs/readme_findings.md) | Key findings with prior-year comparisons |
-| [docs/product_portfolio_plan.md](docs/product_portfolio_plan.md) | Product Portfolio page: analysis, decisions, control values (in Russian) |
-| [docs/customer_portfolio_plan.md](docs/customer_portfolio_plan.md) | Customer Portfolio page: analysis, decisions, control values (in Russian) |
+| [docs/product_portfolio_plan.ru.md](docs/product_portfolio_plan.ru.md) | Product Portfolio page: analysis, decisions, control values (in Russian) |
+| [docs/customer_portfolio_plan.ru.md](docs/customer_portfolio_plan.ru.md) | Customer Portfolio page: analysis, decisions, control values (in Russian) |
 | [docs/powerbi_reader.md](docs/powerbi_reader.md) | Read-only Power BI role: audit, implementation, verification |
-| [docs/dev_prod_plan.md](docs/dev_prod_plan.md) | Plan for DEV / PROD separation (in Russian) |
+| [docs/dev_prod_plan.ru.md](docs/dev_prod_plan.ru.md) | Plan for DEV / PROD separation (in Russian) |
 
 ## Author
 

@@ -2,7 +2,7 @@
 
 [English](readme_findings.md) | Русский
 
-Черновик раздела README проекта. Источники: [product_portfolio_plan.md](product_portfolio_plan.md) (результаты анализа, пп. 1, 5, 6) и скрипты анализа в [analysis/product_portfolio/](../analysis/product_portfolio/).
+Черновик раздела README проекта. Источники: [product_portfolio_plan.ru.md](product_portfolio_plan.ru.md) (результаты анализа, пп. 1, 5, 6) и скрипты анализа в [analysis/product_portfolio/](../analysis/product_portfolio/).
 
 30%+ — скидка больше 30% (> 0,30); строки ровно с 30% входят в группу 20–30%.
 
@@ -18,7 +18,7 @@
 
 ### Customer Portfolio: основные факты
 
-Источники: [customer_portfolio_plan.md](customer_portfolio_plan.md) и скрипты анализа в [analysis/customer_portfolio/](../analysis/customer_portfolio/). Значения за 2015 год в сравнении с 2014. Статус клиента определяется по его суммарной прибыли за год.
+Источники: [customer_portfolio_plan.ru.md](customer_portfolio_plan.ru.md) и скрипты анализа в [analysis/customer_portfolio/](../analysis/customer_portfolio/). Значения за 2015 год в сравнении с 2014. Статус клиента определяется по его суммарной прибыли за год.
 
 - **Убыточен каждый четвёртый клиент.** В 2015 году 1 896 из 7 624 клиентов (24,87%; 2014: 1 513 из 6 113, 24,75%; 2012–2013: 24,8–25,3%). Их чистый убыток −274,1K, это 35,2% прибыли прибыльных клиентов (2014: −219,5K, 35,0%).
 - **Большую часть этого убытка дают строки со скидкой 30%+.** В 2015 году на них приходится −257,3K из −274,1K (93,9%; 2014: 96,2%). Такие строки есть у 1 579 из 1 896 убыточных клиентов (83,3%; 2014: 1 273 из 1 513, 84,1%). Убыточных клиентов без скидки нет.

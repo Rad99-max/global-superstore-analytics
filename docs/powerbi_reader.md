@@ -1,5 +1,7 @@
 # Power BI reader: audit, implementation and verification
 
+English | [Русский](powerbi_reader.ru.md)
+
 Status: IMPLEMENTED. Deployment date: 2026-11-09.
 Recorded on 2026-11-10 from the user's confirmation of successful execution,
 verification and Power BI Desktop refresh. No database operations were performed
@@ -7,37 +9,37 @@ while recording these results.
 
 Workspace: the global-superstore-analytics repository root.
 
-## Результаты внедрения — 09.11.2026
+## Implementation results — 2026-11-09
 
-Результаты подтверждены пользователем после выполнения настройки:
+Results confirmed by the user after the setup was run:
 
-- PostgreSQL 17.4, база sales_dwh.
-- Роль powerbi_reader создана и активирована с LOGIN.
-- Пароль установлен с использованием SCRAM-SHA-256; пароль и его verifier
-  в документацию не записываются.
-- Предоставлены права SELECT на 11 аналитических источников Power BI.
-- Проверка sql/06_security/02_verify_powerbi_reader.sql завершилась PASS.
-- Операции изменения постоянных рабочих таблиц и структуры запрещены в рамках
-  проверенной политики прав.
-- Согласованные исключения PUBLIC TEMPORARY на sales_dwh и PUBLIC USAGE на
-  схему public сохранены.
-- Power BI Desktop переключён с postgres на powerbi_reader.
-- Обновление данных Power BI выполнено успешно. Все визуализации и Business
-  Insights работают после переключения подключения.
+- PostgreSQL 17.4, database sales_dwh.
+- Role powerbi_reader created and activated with LOGIN.
+- Password set with SCRAM-SHA-256; neither the password nor its verifier is
+  recorded in the documentation.
+- SELECT granted on the 11 analytical sources used by Power BI.
+- The check sql/06_security/02_verify_powerbi_reader.sql finished with PASS.
+- Changes to permanent working tables and to the schema structure are not
+  allowed under the verified privilege policy.
+- The approved exceptions PUBLIC TEMPORARY on sales_dwh and PUBLIC USAGE on
+  schema public are kept.
+- Power BI Desktop switched from postgres to powerbi_reader.
+- Power BI data refresh succeeded. All visuals and Business Insights work after
+  the connection switch.
 
-Контрольные показатели Market Performance за 2014 год:
+Market Performance control values for 2014:
 
-| KPI | Значение |
+| KPI | Value |
 |---|---:|
-| Sales | 3 405 746,45 USD |
-| Profit | 406 935,23 USD |
-| Profit Margin | 11,95% |
-| Net Loss | −121,38K USD |
+| Sales | 3,405,746.45 USD |
+| Profit | 406,935.23 USD |
+| Profit Margin | 11.95% |
+| Net Loss | −121.38K USD |
 | Active Countries | 143 |
 
-Результат: отдельное подключение Power BI с ограниченными правами внедрено.
-Это разделение ролей, а не разделение DEV/PROD. План сред:
-[DEV/PROD](dev_prod_plan.md).
+Result: a separate Power BI connection with limited privileges is in place.
+This is a separation of roles, not a DEV/PROD separation. Environment plan:
+[DEV/PROD](dev_prod_plan.ru.md) (in Russian).
 
 ## Historical read-only audit (before implementation)
 

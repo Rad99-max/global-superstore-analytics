@@ -2,7 +2,7 @@
 
 English | [Русский](readme_findings.ru.md)
 
-Draft section for the project README. Sources: [product_portfolio_plan.md](product_portfolio_plan.md) (analysis results, items 1, 5, 6) and the analysis scripts in [analysis/product_portfolio/](../analysis/product_portfolio/).
+Draft section for the project README. Sources: [product_portfolio_plan.ru.md](product_portfolio_plan.ru.md) (in Russian; analysis results, items 1, 5, 6) and the analysis scripts in [analysis/product_portfolio/](../analysis/product_portfolio/).
 
 30%+ = discount above 30% (> 0.30); lines at exactly 30% belong to the 20–30% group.
 
@@ -18,7 +18,7 @@ Draft section for the project README. Sources: [product_portfolio_plan.md](produ
 
 ### Customer Portfolio: key facts
 
-Sources: [customer_portfolio_plan.md](customer_portfolio_plan.md) and the analysis scripts in [analysis/customer_portfolio/](../analysis/customer_portfolio/). Values for 2015, compared with 2014. A customer's status is based on their total profit for the year.
+Sources: [customer_portfolio_plan.ru.md](customer_portfolio_plan.ru.md) (in Russian) and the analysis scripts in [analysis/customer_portfolio/](../analysis/customer_portfolio/). Values for 2015, compared with 2014. A customer's status is based on their total profit for the year.
 
 - **One in four customers is unprofitable.** 1,896 of 7,624 customers in 2015 (24.87%; 2014: 1,513 of 6,113, 24.75%; 2012–2013: 24.8–25.3%). Their net loss is −274.1K, equal to 35.2% of the profit from profitable customers (2014: −219.5K, 35.0%).
 - **Most of this loss comes from sales lines with a 30%+ discount.** In 2015 those lines account for −257.3K of the −274.1K (93.9%; 2014: 96.2%). 1,579 of the 1,896 unprofitable customers (83.3%) have such lines (2014: 1,273 of 1,513, 84.1%). No unprofitable customer bought without a discount.
