@@ -828,7 +828,7 @@ table 'Measures (2)'
 
 	measure 'Geo Country Net Loss Share %' =
 			VAR CountryProfit = [Geo Profit]
-			VAR ScopeLoss = CALCULATE([Geo Net Loss in Loss-Making Countries], ALLSELECTED('dwh dim_geography'[country]))
+			VAR ScopeLoss = CALCULATE([Geo Net Loss in Loss-Making Countries], REMOVEFILTERS('dwh dim_geography'[country]))
 			RETURN IF(NOT ISBLANK(CountryProfit) && CountryProfit < 0, DIVIDE(ABS(CountryProfit), ABS(ScopeLoss)))
 		formatString: 0.00%
 		displayFolder: Market Performance\Countries
